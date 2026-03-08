@@ -50,7 +50,14 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection):
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        include_schemas=True,
+        include_name=lambda name, type_, parent_names: (
+            name in (None, "public", "finance") if type_ == "schema" else True
+        ),
+    )
     with context.begin_transaction():
         context.run_migrations()
 

@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import Column
+from sqlalchemy import Column, DateTime
 from sqlalchemy import Enum as SAEnum
 from sqlmodel import Field, SQLModel
 
@@ -25,7 +25,7 @@ class Transaction(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     user_id: uuid.UUID = Field(foreign_key="users.id", index=True)
     tag_id: uuid.UUID = Field(foreign_key="finance.tags.id", index=True)
-    date_transaction: datetime
+    date_transaction: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     value: float
     currency: Currencies = Field(
         sa_column=Column(
