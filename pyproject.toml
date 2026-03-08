@@ -1,7 +1,37 @@
 [project]
 name = "loot-control-api"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+description = "Loot Control - Financial management API"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "fastapi[standard]>=0.115",
+    "sqlmodel>=0.0.22",
+    "asyncpg>=0.30",
+    "alembic>=1.14",
+    "pydantic-settings>=2.7",
+    "python-dotenv>=1.0",
+    "apscheduler>=3.10",
+    "httpx>=0.28",
+    "python-jose[cryptography]>=3.3",
+    "psycopg2>=2.9.11",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.25",
+    "testcontainers[postgresql]>=4.9",
+    "anyio>=4.7",
+    "httpx>=0.28",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

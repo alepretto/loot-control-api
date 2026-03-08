@@ -1,0 +1,41 @@
+import uuid
+from datetime import datetime
+from enum import Enum
+from typing import Optional
+
+from sqlalchemy import Column
+from sqlalchemy import Enum as SAEnum
+from sqlmodel import Field, SQLModel
+
+
+class Currencies(str, Enum):
+    BRL = "BRL"
+    USD = "USD"
+    EUR = "EUR"
+
+
+# Shared SAEnum instance — reused by ExchangeRate and AssetPrice to avoid duplicate type registration
+currencies_enum = SAEnum(Currencies, name="currencies", schema="finance", create_type=False)
+
+
+class Transaction(SQLModel, table=True):
+    __tablename__ = "transactions"
+    __table_args__ = {"schema": "finance"}
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="users.id", index=True)
+    tag_id: uuid.UUID = Field(foreign_key="finance.tags.id", index=True)
+    date_transaction: datetime
+    value: float
+    currency: Currencies = Field(
+        sa_column=Column(
+            SAEnum(Currencies, name="currencies", schema="finance", create_type=True),
+            nullable=False,
+        )
+    )
+    quantity: Optional[float] = Field(default=None)
+    symbol: Optional[str] = Field(default=None)
+    index_rate: Optional[float] = Field(default=None)
+    index: Optional[str] = Field(default=None)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
