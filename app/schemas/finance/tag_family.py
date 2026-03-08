@@ -5,15 +5,13 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class CategoryCreate(BaseModel):
+class TagFamilyCreate(BaseModel):
     name: str
-    family_id: Optional[uuid.UUID] = None
 
 
-class CategoryRead(BaseModel):
+class TagFamilyRead(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
-    family_id: Optional[uuid.UUID]
     name: str
     created_at: datetime
     updated_at: datetime
@@ -21,6 +19,5 @@ class CategoryRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class CategoryUpdate(BaseModel):
+class TagFamilyUpdate(BaseModel):
     name: Optional[str] = None
-    family_id: Optional[uuid.UUID] = None

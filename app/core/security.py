@@ -19,6 +19,7 @@ async def _get_jwks() -> dict:
             )
             resp.raise_for_status()
             _jwks_cache = resp.json()
+    assert _jwks_cache is not None
     return _jwks_cache
 
 

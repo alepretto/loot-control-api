@@ -1,9 +1,10 @@
 import uuid
 from datetime import UTC, datetime
 from enum import Enum
+from typing import Optional
 
-from sqlalchemy import Column, DateTime
-from sqlalchemy import Enum as SAEnum
+import sqlalchemy as sa
+from sqlalchemy import Column, DateTime, ForeignKey
 from sqlmodel import Field, SQLModel
 
 
@@ -18,11 +19,14 @@ class Category(SQLModel, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     user_id: uuid.UUID = Field(foreign_key="users.id", index=True)
-    type: CategoryType = Field(
+    family_id: Optional[uuid.UUID] = Field(
+        default=None,
         sa_column=Column(
-            SAEnum(CategoryType, name="categorytype", schema="finance"),
-            nullable=False,
-        )
+            sa.Uuid(),
+            ForeignKey("finance.tag_families.id", ondelete="CASCADE"),
+            nullable=True,
+            index=True,
+        ),
     )
     name: str
     created_at: datetime = Field(

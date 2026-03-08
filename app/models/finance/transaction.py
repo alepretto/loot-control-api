@@ -3,7 +3,8 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Optional
 
-from sqlalchemy import Column, DateTime
+import sqlalchemy as sa
+from sqlalchemy import Column, DateTime, ForeignKey
 from sqlalchemy import Enum as SAEnum
 from sqlmodel import Field, SQLModel
 
@@ -24,7 +25,14 @@ class Transaction(SQLModel, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     user_id: uuid.UUID = Field(foreign_key="users.id", index=True)
-    tag_id: uuid.UUID = Field(foreign_key="finance.tags.id", index=True)
+    tag_id: uuid.UUID = Field(
+        sa_column=Column(
+            sa.Uuid(),
+            ForeignKey("finance.tags.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        )
+    )
     date_transaction: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     value: float
     currency: Currencies = Field(

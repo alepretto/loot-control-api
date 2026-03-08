@@ -28,6 +28,8 @@ class TransactionService:
         return await self.repo.list(
             user_id,
             tag_id=filters.tag_id,
+            category_id=filters.category_id,
+            family_id=filters.family_id,
             currency=filters.currency,
             date_from=filters.date_from,
             date_to=filters.date_to,

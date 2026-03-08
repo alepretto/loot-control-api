@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import create_db_and_tables
 from app.jobs.scheduler import setup_scheduler
 from app.routers import users
-from app.routers.finance import categories, tags, transactions
+from app.routers.finance import categories, tag_families, tags, transactions
 
 
 @asynccontextmanager
@@ -29,6 +29,7 @@ app.add_middleware(
 )
 
 app.include_router(users.router)
+app.include_router(tag_families.router)
 app.include_router(categories.router)
 app.include_router(tags.router)
 app.include_router(transactions.router)
