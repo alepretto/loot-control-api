@@ -4,7 +4,7 @@ from typing import Optional
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models.finance.category import Category, CategoryType
+from app.models.finance.category import Category
 from app.repositories.finance.category_repository import CategoryRepository
 from app.schemas.finance.category import CategoryCreate, CategoryUpdate
 
@@ -22,12 +22,8 @@ class CategoryService:
     ) -> Optional[Category]:
         return await self.repo.get_by_id(category_id, user_id)
 
-    async def list(
-        self,
-        user_id: uuid.UUID,
-        type: Optional[CategoryType] = None,
-    ) -> list[Category]:
-        return await self.repo.list(user_id, type=type)
+    async def list(self, user_id: uuid.UUID) -> list[Category]:
+        return await self.repo.list(user_id)
 
     async def update(
         self,

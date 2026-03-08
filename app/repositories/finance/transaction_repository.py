@@ -5,6 +5,8 @@ import sqlalchemy
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.models.finance.category import Category
+from app.models.finance.tag import Tag
 from app.models.finance.transaction import Currencies, Transaction
 
 
@@ -26,6 +28,8 @@ class TransactionRepository:
         self,
         user_id: uuid.UUID,
         tag_id: Optional[uuid.UUID] = None,
+        category_id: Optional[uuid.UUID] = None,
+        family_id: Optional[uuid.UUID] = None,
         currency: Optional[Currencies] = None,
         date_from: Optional[object] = None,
         date_to: Optional[object] = None,
@@ -36,6 +40,16 @@ class TransactionRepository:
 
         if tag_id is not None:
             stmt = stmt.where(Transaction.tag_id == tag_id)
+        if category_id is not None:
+            stmt = stmt.join(Tag, Transaction.tag_id == Tag.id).where(
+                Tag.category_id == category_id
+            )
+        if family_id is not None:
+            if category_id is None:
+                stmt = stmt.join(Tag, Transaction.tag_id == Tag.id)
+            stmt = stmt.join(Category, Tag.category_id == Category.id).where(
+                Category.family_id == family_id
+            )
         if currency is not None:
             stmt = stmt.where(Transaction.currency == currency)
         if date_from is not None:

@@ -1,12 +1,11 @@
 import uuid
-from typing import Annotated, List, Optional
+from typing import Annotated, List
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.database import get_session
 from app.core.security import get_current_user_id
-from app.models.finance.category import CategoryType
 from app.schemas.finance.category import CategoryCreate, CategoryRead, CategoryUpdate
 from app.services.finance.category_service import CategoryService
 
@@ -26,9 +25,8 @@ async def create_category(
 async def list_categories(
     session: Annotated[AsyncSession, Depends(get_session)],
     current_user_id: Annotated[str, Depends(get_current_user_id)],
-    type: Optional[CategoryType] = Query(default=None),
 ):
-    return await CategoryService(session).list(uuid.UUID(current_user_id), type=type)
+    return await CategoryService(session).list(uuid.UUID(current_user_id))
 
 
 @router.get("/{category_id}", response_model=CategoryRead)

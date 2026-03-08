@@ -4,7 +4,7 @@ from typing import Optional
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models.finance.category import Category, CategoryType
+from app.models.finance.category import Category
 
 
 class CategoryRepository:
@@ -19,14 +19,8 @@ class CategoryRepository:
         result = await self.session.exec(stmt)
         return result.first()
 
-    async def list(
-        self,
-        user_id: uuid.UUID,
-        type: Optional[CategoryType] = None,
-    ) -> list[Category]:
+    async def list(self, user_id: uuid.UUID) -> list[Category]:
         stmt = select(Category).where(Category.user_id == user_id)
-        if type is not None:
-            stmt = stmt.where(Category.type == type)
         result = await self.session.exec(stmt)
         return list(result.all())
 

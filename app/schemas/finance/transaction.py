@@ -48,6 +48,8 @@ class TransactionUpdate(BaseModel):
 
 class TransactionFilter(BaseModel):
     tag_id: Optional[uuid.UUID] = None
+    category_id: Optional[uuid.UUID] = None
+    family_id: Optional[uuid.UUID] = None
     currency: Optional[Currencies] = None
     date_from: Optional[datetime] = None
     date_to: Optional[datetime] = None
