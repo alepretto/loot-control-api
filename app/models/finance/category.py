@@ -1,8 +1,8 @@
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 
-from sqlalchemy import Column
+from sqlalchemy import Column, DateTime
 from sqlalchemy import Enum as SAEnum
 from sqlmodel import Field, SQLModel
 
@@ -13,7 +13,7 @@ class CategoryType(str, Enum):
 
 
 class Category(SQLModel, table=True):
-    __tablename__ = "categories"
+    __tablename__ = "categories"  # type: ignore
     __table_args__ = {"schema": "finance"}
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -25,5 +25,11 @@ class Category(SQLModel, table=True):
         )
     )
     name: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
