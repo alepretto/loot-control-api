@@ -3,19 +3,12 @@ name: Tests
 on:
   push:
     branches: [main]
-    paths:
-      - "loot-control-api/**"
   pull_request:
     branches: [main]
-    paths:
-      - "loot-control-api/**"
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: loot-control-api
 
     steps:
       - uses: actions/checkout@v4
