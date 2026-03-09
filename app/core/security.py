@@ -1,3 +1,6 @@
+import uuid
+from typing import Annotated
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
@@ -45,3 +48,20 @@ async def get_current_user_id(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
         )
+
+
+async def require_admin(
+    current_user_id: Annotated[str, Depends(get_current_user_id)],
+) -> str:
+    from app.core.database import AsyncSessionLocal
+    from app.models.user import User
+    from sqlmodel import select
+
+    async with AsyncSessionLocal() as session:
+        result = await session.exec(select(User).where(User.id == uuid.UUID(current_user_id)))
+        user = result.first()
+
+    if not user or user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
+
+    return current_user_id
