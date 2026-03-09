@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import Annotated
 
@@ -5,6 +6,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 import httpx
+
+logger = logging.getLogger(__name__)
 
 from app.core.config import settings
 
@@ -44,7 +47,7 @@ async def get_current_user_id(
             )
         return user_id
     except JWTError as e:
-        print(f"[JWT ERROR] {e}")
+        logger.warning("JWT validation failed: %s", type(e).__name__)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
         )

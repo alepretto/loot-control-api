@@ -20,6 +20,15 @@ from app.services.finance.transaction_service import TransactionService
 router = APIRouter(prefix="/finance/transactions", tags=["transactions"])
 
 
+def _parse_date(value: Optional[str]) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid date format: {value}")
+
+
 class PaginatedTransactions(BaseModel):
     items: List[TransactionRead]
     total: int
@@ -54,8 +63,8 @@ async def list_transactions(
         category_id=category_id,
         family_id=family_id,
         currency=currency,
-        date_from=datetime.fromisoformat(date_from) if date_from else None,
-        date_to=datetime.fromisoformat(date_to) if date_to else None,
+        date_from=_parse_date(date_from),
+        date_to=_parse_date(date_to),
         page=page,
         page_size=page_size,
     )

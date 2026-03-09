@@ -12,6 +12,9 @@ class Settings(BaseSettings):
 
     ENVIRONMENT: str = "development"
     DB_ECHO: bool = False
+    # Comma-separated list of allowed CORS origins, e.g.:
+    # ALLOWED_ORIGINS=https://app.lootcontrol.com,https://lootcontrol.com
+    ALLOWED_ORIGINS: str = "http://localhost:3000"
 
 
 settings = Settings()  # type: ignore
