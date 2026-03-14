@@ -31,3 +31,4 @@ class TagUpdate(BaseModel):
     name: Optional[str] = None
     type: Optional[CategoryType] = None
     is_active: Optional[bool] = None
+    category_id: Optional[uuid.UUID] = None
