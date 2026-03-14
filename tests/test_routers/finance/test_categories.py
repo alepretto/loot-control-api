@@ -86,3 +86,33 @@ async def test_delete_category(client: AsyncClient):
 async def test_get_nonexistent_category(client: AsyncClient):
     response = await client.get("/finance/categories/00000000-0000-0000-0000-000000000000")
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_update_category_name(client: AsyncClient):
+    """PATCH no nome da categoria: novo nome retornado e persistido."""
+    create_res = await client.post("/finance/categories/", json={"name": "NomeAntigo"})
+    category_id = create_res.json()["id"]
+
+    response = await client.patch(f"/finance/categories/{category_id}", json={"name": "NomeNovo"})
+    assert response.status_code == 200
+    assert response.json()["name"] == "NomeNovo"
+
+    # Verificar persistência via GET
+    get_res = await client.get(f"/finance/categories/{category_id}")
+    assert get_res.status_code == 200
+    assert get_res.json()["name"] == "NomeNovo"
+
+
+@pytest.mark.asyncio
+async def test_list_categories_returns_all(client: AsyncClient):
+    """Cria 3 categorias, verifica que todas aparecem na listagem."""
+    names = ["CatListA", "CatListB", "CatListC"]
+    for name in names:
+        await client.post("/finance/categories/", json={"name": name})
+
+    response = await client.get("/finance/categories/")
+    assert response.status_code == 200
+    returned_names = [c["name"] for c in response.json()]
+    for name in names:
+        assert name in returned_names

@@ -14,7 +14,10 @@ class Settings(BaseSettings):
     DB_ECHO: bool = False
     # Comma-separated list of allowed CORS origins, e.g.:
     # ALLOWED_ORIGINS=https://app.lootcontrol.com,https://lootcontrol.com
-    ALLOWED_ORIGINS: str = "http://localhost:3000"
+    ALLOWED_ORIGINS: str = "http://localhost:3000,https://loot-control.com.br"
+
+    OPENROUTER_API_KEY: str
+    TELEGRAM_BOT_TOKEN: str
 
 
 settings = Settings()  # type: ignore
