@@ -1,13 +1,13 @@
 import logging
-import uuid
 
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 from telegram import Update
 from telegram.ext import ContextTypes
 
 from app.bot.agent import process_message
-from app.core.config import settings
 from app.core.database import engine
-from sqlmodel.ext.asyncio.session import AsyncSession
+from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
@@ -16,16 +16,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if not update.message or not update.message.text:
         return
 
-    if str(update.effective_user.id) != settings.TELEGRAM_USER_ID:
-        await update.message.reply_text("Acesso não autorizado.")
+    telegram_id = str(update.effective_user.id)
+
+    # Look up user by telegram_id
+    async with AsyncSession(engine) as session:
+        result = await session.exec(select(User).where(User.telegram_id == telegram_id))
+        user = result.first()
+
+    if not user:
+        await update.message.reply_text("Sua conta não está vinculada. Acesse o app e faça o login pelo Telegram.")
         return
 
-    user_id = uuid.UUID(settings.BOT_USER_ID)
     await update.message.chat.send_action("typing")
 
     try:
         async with AsyncSession(engine) as session:
-            response = await process_message(session, user_id, update.message.text)
+            response = await process_message(session, user.id, update.message.text)
         await update.message.reply_text(response)
     except Exception as e:
         logger.error(f"Agent error: {e}", exc_info=True)
