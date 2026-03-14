@@ -18,6 +18,7 @@ class Settings(BaseSettings):
 
     OPENROUTER_API_KEY: str = ""
     TELEGRAM_BOT_TOKEN: str = ""
+    MINI_APP_URL: str = ""  # e.g. https://loot-control.com.br/mini
 
 
 settings = Settings()  # type: ignore
