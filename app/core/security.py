@@ -1,7 +1,13 @@
+import logging
+import uuid
+from typing import Annotated
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 import httpx
+
+logger = logging.getLogger(__name__)
 
 from app.core.config import settings
 
@@ -41,7 +47,24 @@ async def get_current_user_id(
             )
         return user_id
     except JWTError as e:
-        print(f"[JWT ERROR] {e}")
+        logger.warning("JWT validation failed: %s", type(e).__name__)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
         )
+
+
+async def require_admin(
+    current_user_id: Annotated[str, Depends(get_current_user_id)],
+) -> str:
+    from app.core.database import AsyncSessionLocal
+    from app.models.user import User
+    from sqlmodel import select
+
+    async with AsyncSessionLocal() as session:
+        result = await session.exec(select(User).where(User.id == uuid.UUID(current_user_id)))
+        user = result.first()
+
+    if not user or user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
+
+    return current_user_id

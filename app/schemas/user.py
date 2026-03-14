@@ -17,6 +17,7 @@ class UserRead(BaseModel):
     id: uuid.UUID
     email: str
     username: str
+    role: str
     first_name: str
     last_name: str
     telegram_id: Optional[str]

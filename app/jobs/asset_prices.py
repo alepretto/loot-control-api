@@ -1,46 +1,168 @@
+import logging
 import uuid
 from datetime import date
 from typing import List
 
 import httpx
+from sqlmodel import select
 
 from app.core.database import AsyncSessionLocal
 from app.models.finance.asset_price import AssetPrice
-from app.models.finance.transaction import Currencies
+from app.models.finance.transaction import Currencies, Transaction
+
+logger = logging.getLogger(__name__)
 
 COINGECKO_API = "https://api.coingecko.com/api/v3"
 BRAPI_API = "https://brapi.dev/api"
 
+# Mapeamento símbolo (uppercase) → CoinGecko ID
+CRYPTO_ID_MAP: dict[str, str] = {
+    "BTC": "bitcoin",
+    "ETH": "ethereum",
+    "SOL": "solana",
+    "BNB": "binancecoin",
+    "XRP": "ripple",
+    "ADA": "cardano",
+    "DOGE": "dogecoin",
+    "MATIC": "matic-network",
+    "DOT": "polkadot",
+    "AVAX": "avalanche-2",
+    "LINK": "chainlink",
+    "UNI": "uniswap",
+    "LTC": "litecoin",
+    "ATOM": "cosmos",
+    "XLM": "stellar",
+    "ALGO": "algorand",
+    "NEAR": "near",
+    "FTM": "fantom",
+    "SAND": "the-sandbox",
+    "MANA": "decentraland",
+    "FET":  "fetch-ai",
+    "SUI":  "sui",
+    "TON":  "the-open-network",
+    "ARB":  "arbitrum",
+    "OP":   "optimism",
+    "INJ":  "injective-protocol",
+    "TIA":  "celestia",
+    "SEI":  "sei-network",
+}
+
+
+def _is_br_stock(symbol: str) -> bool:
+    """Ações BR terminam em dígito (ex: PETR4, VALE3, MXRF11)."""
+    return len(symbol) >= 4 and symbol[-1].isdigit()
+
+
+def _is_crypto(symbol: str) -> bool:
+    return symbol.upper() in CRYPTO_ID_MAP
+
+
+def _is_us_stock(symbol: str) -> bool:
+    """US stocks não são crypto nem BR stock."""
+    return not _is_crypto(symbol) and not _is_br_stock(symbol)
+
+
+async def _get_distinct_symbols() -> list[str]:
+    """Retorna todos os símbolos distintos em finance.transactions."""
+    async with AsyncSessionLocal() as session:
+        result = await session.exec(
+            select(Transaction.symbol)
+            .where(Transaction.symbol.isnot(None))  # type: ignore[union-attr]
+            .distinct()
+        )
+        return [s for s in result.all() if s is not None]
+
 
 async def fetch_crypto_prices(symbols: List[str]) -> List[AssetPrice]:
-    ids = ",".join(symbols)
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"{COINGECKO_API}/simple/price",
-            params={"ids": ids, "vs_currencies": "usd,brl"},
-        )
-        response.raise_for_status()
-        data = response.json()
+    """Busca preços no CoinGecko para os símbolos fornecidos."""
+    coingecko_ids = []
+    symbol_by_id: dict[str, str] = {}
+
+    for sym in symbols:
+        cg_id = CRYPTO_ID_MAP.get(sym.upper())
+        if cg_id:
+            coingecko_ids.append(cg_id)
+            symbol_by_id[cg_id] = sym.upper()
+        else:
+            logger.warning("Símbolo cripto sem mapeamento CoinGecko: %s (ignorado)", sym)
+
+    if not coingecko_ids:
+        return []
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.get(
+                f"{COINGECKO_API}/simple/price",
+                params={"ids": ",".join(coingecko_ids), "vs_currencies": "usd,brl"},
+            )
+            response.raise_for_status()
+            data = response.json()
+    except Exception as e:
+        logger.error("Erro ao buscar preços cripto: %s", e)
+        return []
 
     today = date.today()
+    prices = []
+    for cg_id, values in data.items():
+        sym: str = symbol_by_id.get(cg_id) or cg_id.upper()
+        usd_price = values.get("usd")
+        if usd_price is not None:
+            prices.append(AssetPrice(
+                id=uuid.uuid4(),
+                symbol=sym,
+                price=usd_price,
+                currency=Currencies.USD,
+                date=today,
+            ))
+    return prices
+
+
+async def fetch_us_stock_prices(tickers: List[str]) -> List[AssetPrice]:
+    """Busca preços via Yahoo Finance para ações dos EUA."""
+    if not tickers:
+        return []
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.get(
+                "https://query1.finance.yahoo.com/v7/finance/quote",
+                params={"symbols": ",".join(tickers)},
+                headers={"User-Agent": "Mozilla/5.0"},
+            )
+            response.raise_for_status()
+            data = response.json()
+    except Exception as e:
+        logger.error("Erro ao buscar preços US stocks: %s", e)
+        return []
+
+    today = date.today()
+    results = data.get("quoteResponse", {}).get("result", [])
     return [
         AssetPrice(
             id=uuid.uuid4(),
-            symbol=symbol.upper(),
-            price=values.get("usd", 0),
+            symbol=r["symbol"],
+            price=r["regularMarketPrice"],
             currency=Currencies.USD,
             date=today,
         )
-        for symbol, values in data.items()
+        for r in results
+        if "regularMarketPrice" in r
     ]
 
 
 async def fetch_br_stock_prices(tickers: List[str]) -> List[AssetPrice]:
-    ticker_str = ",".join(tickers)
-    async with httpx.AsyncClient() as client:
-        response = await client.get(f"{BRAPI_API}/quote/{ticker_str}")
-        response.raise_for_status()
-        data = response.json()
+    """Busca preços via brapi.dev para ações brasileiras."""
+    if not tickers:
+        return []
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.get(f"{BRAPI_API}/quote/{','.join(tickers)}")
+            response.raise_for_status()
+            data = response.json()
+    except Exception as e:
+        logger.error("Erro ao buscar preços ações BR: %s", e)
+        return []
 
     today = date.today()
     return [
@@ -52,14 +174,65 @@ async def fetch_br_stock_prices(tickers: List[str]) -> List[AssetPrice]:
             date=today,
         )
         for result in data.get("results", [])
+        if "regularMarketPrice" in result
     ]
 
 
+async def _existing_asset_prices_today() -> set[str]:
+    """Retorna símbolos já persistidos para hoje (evita duplicatas)."""
+    today = date.today()
+    async with AsyncSessionLocal() as session:
+        result = await session.exec(
+            select(AssetPrice.symbol).where(AssetPrice.date == today)  # type: ignore[arg-type]
+        )
+        return {s.upper() for s in result.all() if s}
+
+
 async def update_asset_prices() -> None:
-    crypto_prices = await fetch_crypto_prices(["bitcoin", "ethereum", "solana"])
-    br_prices = await fetch_br_stock_prices(["PETR4", "VALE3", "ITUB4"])
+    """Job principal: descobre ativos investidos e atualiza preços.
+
+    Idempotente: ignora símbolos já persistidos para a data de hoje.
+    """
+    symbols = await _get_distinct_symbols()
+
+    if not symbols:
+        logger.info("Nenhum ativo encontrado nas transações.")
+        return
+
+    logger.info("Ativos encontrados nas transações: %s", symbols)
+
+    # Dedup: skip symbols already stored for today
+    already_stored = await _existing_asset_prices_today()
+    symbols_to_fetch = [s for s in symbols if s.upper() not in {x.upper() for x in already_stored}]
+
+    if not symbols_to_fetch:
+        logger.info("Preços de hoje já registrados para todos os ativos. Nada a fazer.")
+        return
+
+    crypto_symbols = [s for s in symbols_to_fetch if _is_crypto(s)]
+    br_symbols = [s for s in symbols_to_fetch if _is_br_stock(s)]
+    us_symbols = [s for s in symbols_to_fetch if _is_us_stock(s)]
+
+    logger.info("Classificação — crypto: %s, BR: %s, US: %s", crypto_symbols, br_symbols, us_symbols)
+
+    crypto_prices = await fetch_crypto_prices(crypto_symbols)
+    br_prices = await fetch_br_stock_prices(br_symbols)
+    us_prices = await fetch_us_stock_prices(us_symbols)
+
+    all_prices = [*crypto_prices, *br_prices, *us_prices]
+
+    if not all_prices:
+        logger.warning("Nenhum preço retornado pelas APIs.")
+        return
 
     async with AsyncSessionLocal() as session:
-        for price in [*crypto_prices, *br_prices]:
+        for price in all_prices:
             session.add(price)
         await session.commit()
+
+    logger.info(
+        "Preços atualizados: %d cripto, %d ações BR, %d US stocks",
+        len(crypto_prices),
+        len(br_prices),
+        len(us_prices),
+    )
