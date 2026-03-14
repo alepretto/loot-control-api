@@ -2,9 +2,14 @@ import json
 import uuid
 from datetime import UTC, date, datetime
 
+from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.bot.memory import agent_memory_service
+from app.models.finance.category import Category
+from app.models.finance.tag import Tag
+from app.models.finance.tag_family import TagFamily
+from app.models.finance.transaction import Transaction
 from app.schemas.finance.transaction import TransactionFilter
 from app.services.finance.summary_service import SummaryService
 from app.services.finance.transaction_service import TransactionService
@@ -121,27 +126,40 @@ async def execute_tool(
 
         elif tool_name == "get_recent_transactions":
             limit = min(tool_args.get("limit", 10), 50)
-            date_from = tool_args.get("date_from")
-            date_to = tool_args.get("date_to")
+            date_from_str = tool_args.get("date_from")
+            date_to_str = tool_args.get("date_to")
 
-            filters = TransactionFilter(
-                page=1,
-                page_size=limit,
-                date_from=datetime.fromisoformat(date_from) if date_from else None,
-                date_to=datetime.fromisoformat(date_to) if date_to else None,
+            query = (
+                select(Transaction, Tag, Category, TagFamily)
+                .join(Tag, Transaction.tag_id == Tag.id)
+                .join(Category, Tag.category_id == Category.id)
+                .outerjoin(TagFamily, Category.family_id == TagFamily.id)
+                .where(Transaction.user_id == user_id)
             )
-            transaction_service = TransactionService(session)
-            transactions, total = await transaction_service.list(user_id, filters)
+            if date_from_str:
+                query = query.where(
+                    Transaction.date_transaction >= datetime.fromisoformat(date_from_str).replace(tzinfo=UTC)
+                )
+            if date_to_str:
+                query = query.where(
+                    Transaction.date_transaction <= datetime.fromisoformat(date_to_str).replace(hour=23, minute=59, second=59, tzinfo=UTC)
+                )
+            query = query.order_by(Transaction.date_transaction.desc()).limit(limit)  # type: ignore[union-attr]
+            rows = (await session.exec(query)).all()  # type: ignore[call-overload]
+
             result = {
-                "total": total,
+                "total": len(rows),
                 "transactions": [
                     {
-                        "date": t.date_transaction.strftime("%d/%m/%Y %H:%M"),
-                        "value": t.value,
-                        "currency": t.currency,
-                        "tag_id": str(t.tag_id),
+                        "date": tx.date_transaction.strftime("%d/%m/%Y %H:%M"),
+                        "value": tx.value,
+                        "currency": tx.currency.value if hasattr(tx.currency, "value") else str(tx.currency),
+                        "type": tag.type.value if hasattr(tag.type, "value") else str(tag.type),
+                        "tag": tag.name,
+                        "category": cat.name,
+                        "family": fam.name if fam else "Sem família",
                     }
-                    for t in transactions
+                    for tx, tag, cat, fam in rows
                 ],
             }
             return json.dumps(result, ensure_ascii=False, default=str)

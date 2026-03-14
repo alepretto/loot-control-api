@@ -31,7 +31,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     try:
         async with AsyncSession(engine) as session:
-            response = await process_message(session, user.id, update.message.text)
+            response = await process_message(session, user.id, update.message.text, is_telegram=True)
         await update.message.reply_text(response)
     except Exception as e:
         logger.error(f"Agent error: {e}", exc_info=True)
