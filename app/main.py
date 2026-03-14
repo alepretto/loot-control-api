@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import create_db_and_tables
 from app.jobs.scheduler import setup_scheduler
-from app.routers import admin, agent, users
+from app.routers import admin, agent, mini, users
 from app.routers.finance import categories, market_data, tag_families, tags, transactions
 
 logger = logging.getLogger(__name__)
@@ -55,6 +55,7 @@ app.add_middleware(
 app.include_router(users.router)
 app.include_router(admin.router)
 app.include_router(agent.router)
+app.include_router(mini.router)
 app.include_router(tag_families.router)
 app.include_router(categories.router)
 app.include_router(tags.router)
