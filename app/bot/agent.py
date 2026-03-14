@@ -12,11 +12,16 @@ from app.bot.tools import TOOLS, execute_tool
 logger = logging.getLogger(__name__)
 
 
-async def process_message(session: AsyncSession, user_id: uuid.UUID, user_text: str) -> str:
+async def process_message(
+    session: AsyncSession,
+    user_id: uuid.UUID,
+    user_text: str,
+    is_telegram: bool = False,
+) -> str:
     history = await agent_memory_service.get_history(session, user_id)
     memories = await agent_memory_service.get_memories(session, user_id)
 
-    system_prompt = build_system_prompt(memories)
+    system_prompt = build_system_prompt(memories, is_telegram=is_telegram)
     messages = [{"role": "system", "content": system_prompt}]
     messages.extend(history)
     messages.append({"role": "user", "content": user_text})
