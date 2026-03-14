@@ -131,3 +131,32 @@ async def test_delete_tag_cascades_transactions(client: AsyncClient):
 
     assert (await client.delete(f"/finance/tags/{tag_id}")).status_code == 204
     assert (await client.get(f"/finance/transactions/{tx_id}")).status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_update_family_name(client: AsyncClient):
+    """PATCH no nome da família: novo nome retornado e persistido."""
+    family_id = await _create_family(client, "FamNomeAntigo")
+
+    response = await client.patch(f"/finance/tag-families/{family_id}", json={"name": "FamNomeNovo"})
+    assert response.status_code == 200
+    assert response.json()["name"] == "FamNomeNovo"
+
+    # Verificar persistência via GET
+    get_res = await client.get(f"/finance/tag-families/{family_id}")
+    assert get_res.status_code == 200
+    assert get_res.json()["name"] == "FamNomeNovo"
+
+
+@pytest.mark.asyncio
+async def test_list_families_returns_all(client: AsyncClient):
+    """Cria 2 famílias, verifica que ambas aparecem na listagem."""
+    names = ["FamListA", "FamListB"]
+    for name in names:
+        await _create_family(client, name)
+
+    response = await client.get("/finance/tag-families/")
+    assert response.status_code == 200
+    returned_names = [f["name"] for f in response.json()]
+    for name in names:
+        assert name in returned_names

@@ -49,6 +49,7 @@ def engine(db_url):
     async def _setup():
         async with _engine.begin() as conn:
             await conn.execute(sqlalchemy.text("CREATE SCHEMA IF NOT EXISTS finance"))
+            await conn.execute(sqlalchemy.text("CREATE SCHEMA IF NOT EXISTS agent"))
             await conn.run_sync(SQLModel.metadata.create_all)
         # Dispose pool so no loop-tied connections linger for the tests
         await _engine.dispose()

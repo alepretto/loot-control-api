@@ -63,11 +63,14 @@ def _is_us_stock(symbol: str) -> bool:
 
 
 async def _get_distinct_symbols() -> list[str]:
-    """Retorna todos os símbolos distintos em finance.transactions."""
+    """Retorna símbolos distintos de transações de mercado (exclui renda fixa com index preenchido)."""
     async with AsyncSessionLocal() as session:
         result = await session.exec(
             select(Transaction.symbol)
-            .where(Transaction.symbol.isnot(None))  # type: ignore[union-attr]
+            .where(
+                Transaction.symbol.isnot(None),  # type: ignore[union-attr]
+                Transaction.index.is_(None),      # renda fixa tem index — ignorar
+            )
             .distinct()
         )
         return [s for s in result.all() if s is not None]
@@ -122,32 +125,37 @@ async def fetch_us_stock_prices(tickers: List[str]) -> List[AssetPrice]:
     if not tickers:
         return []
 
-    try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            response = await client.get(
-                "https://query1.finance.yahoo.com/v7/finance/quote",
-                params={"symbols": ",".join(tickers)},
-                headers={"User-Agent": "Mozilla/5.0"},
-            )
-            response.raise_for_status()
-            data = response.json()
-    except Exception as e:
-        logger.error("Erro ao buscar preços US stocks: %s", e)
-        return []
-
     today = date.today()
-    results = data.get("quoteResponse", {}).get("result", [])
-    return [
-        AssetPrice(
-            id=uuid.uuid4(),
-            symbol=r["symbol"],
-            price=r["regularMarketPrice"],
-            currency=Currencies.USD,
-            date=today,
-        )
-        for r in results
-        if "regularMarketPrice" in r
-    ]
+    prices = []
+
+    async with httpx.AsyncClient(timeout=15, headers={"User-Agent": "Mozilla/5.0"}) as client:
+        for ticker in tickers:
+            try:
+                response = await client.get(
+                    "https://query1.finance.yahoo.com/v7/finance/quote",
+                    params={"symbols": ticker},
+                )
+                if response.status_code == 404:
+                    logger.warning("Ticker não encontrado no Yahoo Finance: %s (ignorado)", ticker)
+                    continue
+                response.raise_for_status()
+                data = response.json()
+                results = data.get("quoteResponse", {}).get("result", [])
+                for r in results:
+                    if "regularMarketPrice" in r:
+                        prices.append(AssetPrice(
+                            id=uuid.uuid4(),
+                            symbol=r["symbol"],
+                            price=r["regularMarketPrice"],
+                            currency=Currencies.USD,
+                            date=today,
+                        ))
+            except httpx.HTTPStatusError as e:
+                logger.warning("Erro HTTP ao buscar %s: %s (ignorado)", ticker, e)
+            except Exception as e:
+                logger.error("Erro ao buscar preço de %s: %s", ticker, e)
+
+    return prices
 
 
 async def fetch_br_stock_prices(tickers: List[str]) -> List[AssetPrice]:

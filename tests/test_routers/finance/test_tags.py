@@ -127,3 +127,68 @@ async def test_delete_tag(client: AsyncClient):
     create = await client.post("/finance/tags/", json={"name": "TempTag", "category_id": cat_id, "type": "outcome"})
     tag_id = create.json()["id"]
     assert (await client.delete(f"/finance/tags/{tag_id}")).status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_filter_by_type(client: AsyncClient):
+    """Filtra tags por tipo: apenas outcome ou income conforme solicitado."""
+    cat_id = await _create_category(client, "CatFilterType")
+    await client.post("/finance/tags/", json={"name": "TagOut1", "category_id": cat_id, "type": "outcome"})
+    await client.post("/finance/tags/", json={"name": "TagOut2", "category_id": cat_id, "type": "outcome"})
+    await client.post("/finance/tags/", json={"name": "TagInc1", "category_id": cat_id, "type": "income"})
+
+    outcome_res = await client.get(f"/finance/tags/?category_id={cat_id}&type=outcome")
+    assert outcome_res.status_code == 200
+    outcome_tags = outcome_res.json()
+    assert len(outcome_tags) == 2
+    assert all(t["type"] == "outcome" for t in outcome_tags)
+
+    income_res = await client.get(f"/finance/tags/?category_id={cat_id}&type=income")
+    assert income_res.status_code == 200
+    income_tags = income_res.json()
+    assert len(income_tags) == 1
+    assert income_tags[0]["type"] == "income"
+
+
+@pytest.mark.asyncio
+async def test_filter_by_is_active(client: AsyncClient):
+    """Filtra tags por is_active: apenas inativas retornadas ao filtrar is_active=false."""
+    cat_id = await _create_category(client, "CatFilterActive")
+    r_active = await client.post(
+        "/finance/tags/", json={"name": "ActiveTag", "category_id": cat_id, "type": "outcome"}
+    )
+    r_inactive = await client.post(
+        "/finance/tags/", json={"name": "InactiveTag", "category_id": cat_id, "type": "outcome"}
+    )
+    inactive_id = r_inactive.json()["id"]
+
+    # Desativar a tag
+    await client.patch(f"/finance/tags/{inactive_id}", json={"is_active": False})
+
+    # Filtrar por is_active=false
+    response = await client.get(f"/finance/tags/?category_id={cat_id}&is_active=false")
+    assert response.status_code == 200
+    tags = response.json()
+    assert all(t["is_active"] is False for t in tags)
+    names = [t["name"] for t in tags]
+    assert "InactiveTag" in names
+    assert "ActiveTag" not in names
+
+
+@pytest.mark.asyncio
+async def test_update_tag_name(client: AsyncClient):
+    """PATCH no nome da tag: novo nome retornado e persistido."""
+    cat_id = await _create_category(client, "CatUpdateTagName")
+    create = await client.post(
+        "/finance/tags/", json={"name": "OldName", "category_id": cat_id, "type": "outcome"}
+    )
+    tag_id = create.json()["id"]
+
+    response = await client.patch(f"/finance/tags/{tag_id}", json={"name": "NewName"})
+    assert response.status_code == 200
+    assert response.json()["name"] == "NewName"
+
+    # Verificar persistência via GET
+    get_res = await client.get(f"/finance/tags/{tag_id}")
+    assert get_res.status_code == 200
+    assert get_res.json()["name"] == "NewName"
