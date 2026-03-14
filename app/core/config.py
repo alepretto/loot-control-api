@@ -16,8 +16,8 @@ class Settings(BaseSettings):
     # ALLOWED_ORIGINS=https://app.lootcontrol.com,https://lootcontrol.com
     ALLOWED_ORIGINS: str = "http://localhost:3000,https://loot-control.com.br"
 
-    OPENROUTER_API_KEY: str
-    TELEGRAM_BOT_TOKEN: str
+    OPENROUTER_API_KEY: str = ""
+    TELEGRAM_BOT_TOKEN: str = ""
 
 
 settings = Settings()  # type: ignore
