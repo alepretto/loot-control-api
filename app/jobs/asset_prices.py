@@ -6,6 +6,7 @@ from typing import List
 import httpx
 from sqlmodel import select
 
+from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.models.finance.asset_price import AssetPrice
 from app.models.finance.transaction import Currencies, Transaction
@@ -92,8 +93,12 @@ async def fetch_crypto_prices(symbols: List[str]) -> List[AssetPrice]:
     if not coingecko_ids:
         return []
 
+    headers = {}
+    if settings.COINGECKO_API_KEY:
+        headers["x-cg-demo-api-key"] = settings.COINGECKO_API_KEY
+
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with httpx.AsyncClient(timeout=15, headers=headers) as client:
             response = await client.get(
                 f"{COINGECKO_API}/simple/price",
                 params={"ids": ",".join(coingecko_ids), "vs_currencies": "usd,brl"},
@@ -186,20 +191,26 @@ async def fetch_br_stock_prices(tickers: List[str]) -> List[AssetPrice]:
     ]
 
 
-async def _existing_asset_prices_today() -> set[str]:
-    """Retorna símbolos já persistidos para hoje (evita duplicatas)."""
+async def _delete_asset_prices_today(symbols: list[str]) -> None:
+    """Remove preços de hoje para os símbolos fornecidos (permite re-fetch no mesmo dia)."""
     today = date.today()
+    symbols_upper = [s.upper() for s in symbols]
     async with AsyncSessionLocal() as session:
-        result = await session.exec(
-            select(AssetPrice.symbol).where(AssetPrice.date == today)  # type: ignore[arg-type]
+        existing = await session.exec(
+            select(AssetPrice).where(
+                AssetPrice.date == today,  # type: ignore[arg-type]
+                AssetPrice.symbol.in_(symbols_upper),  # type: ignore[union-attr]
+            )
         )
-        return {s.upper() for s in result.all() if s}
+        for row in existing.all():
+            await session.delete(row)
+        await session.commit()
 
 
 async def update_asset_prices() -> None:
     """Job principal: descobre ativos investidos e atualiza preços.
 
-    Idempotente: ignora símbolos já persistidos para a data de hoje.
+    Roda até 3x/dia — apaga os registros de hoje antes de inserir novos.
     """
     symbols = await _get_distinct_symbols()
 
@@ -209,17 +220,11 @@ async def update_asset_prices() -> None:
 
     logger.info("Ativos encontrados nas transações: %s", symbols)
 
-    # Dedup: skip symbols already stored for today
-    already_stored = await _existing_asset_prices_today()
-    symbols_to_fetch = [s for s in symbols if s.upper() not in {x.upper() for x in already_stored}]
+    await _delete_asset_prices_today(symbols)
 
-    if not symbols_to_fetch:
-        logger.info("Preços de hoje já registrados para todos os ativos. Nada a fazer.")
-        return
-
-    crypto_symbols = [s for s in symbols_to_fetch if _is_crypto(s)]
-    br_symbols = [s for s in symbols_to_fetch if _is_br_stock(s)]
-    us_symbols = [s for s in symbols_to_fetch if _is_us_stock(s)]
+    crypto_symbols = [s for s in symbols if _is_crypto(s)]
+    br_symbols = [s for s in symbols if _is_br_stock(s)]
+    us_symbols = [s for s in symbols if _is_us_stock(s)]
 
     logger.info("Classificação — crypto: %s, BR: %s, US: %s", crypto_symbols, br_symbols, us_symbols)
 

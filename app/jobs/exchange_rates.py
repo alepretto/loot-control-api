@@ -2,6 +2,7 @@ import uuid
 from datetime import date
 
 import httpx
+from sqlmodel import select
 
 from app.core.database import AsyncSessionLocal
 from app.models.finance.exchange_rate import ExchangeRate
@@ -21,6 +22,13 @@ async def update_exchange_rates() -> None:
     mapping = {"USDBRL": Currencies.USD, "EURBRL": Currencies.EUR}
 
     async with AsyncSessionLocal() as session:
+        # Remove registros de hoje antes de inserir novos (permite re-fetch no mesmo dia)
+        existing = await session.exec(
+            select(ExchangeRate).where(ExchangeRate.date == today)  # type: ignore[arg-type]
+        )
+        for row in existing.all():
+            await session.delete(row)
+
         for key, currency in mapping.items():
             if key in data:
                 rate = float(data[key]["bid"])
