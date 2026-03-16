@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     # ALLOWED_ORIGINS=https://app.lootcontrol.com,https://lootcontrol.com
     ALLOWED_ORIGINS: str = "http://localhost:3000,https://loot-control.com.br"
 
+    COINGECKO_API_KEY: str = ""  # Demo key (gratuito) em coingecko.com — melhora rate limits
     OPENROUTER_API_KEY: str = ""
     TELEGRAM_BOT_TOKEN: str = ""
     MINI_APP_URL: str = ""        # e.g. https://loot-control.com.br/mini
