@@ -57,15 +57,15 @@ class TransactionRepository:
         if date_to is not None:
             stmt = stmt.where(Transaction.date_transaction <= date_to)
 
-        count_stmt = select(sqlalchemy.func.count()).select_from(stmt.subquery())
-        total = (await self.session.exec(count_stmt)).one()
-
         paginated = (
-            stmt.order_by(Transaction.date_transaction.desc())
+            stmt.add_columns(sqlalchemy.func.count().over().label("total"))
+            .order_by(Transaction.date_transaction.desc())
             .offset((page - 1) * page_size)
             .limit(page_size)
         )
-        items = list((await self.session.exec(paginated)).all())
+        rows = (await self.session.execute(paginated)).all()
+        items = [row[0] for row in rows]
+        total = rows[0][1] if rows else 0
         return items, total
 
     async def save(self, transaction: Transaction) -> Transaction:
