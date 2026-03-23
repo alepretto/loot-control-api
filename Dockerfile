@@ -18,4 +18,4 @@ RUN uv sync --frozen --no-dev
 ENV PORT=8080
 EXPOSE 8080
 
-CMD uv run uvicorn app.main:app --host 0.0.0.0 --port ${PORT}
+CMD ["/app/.venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--log-level", "warning"]
