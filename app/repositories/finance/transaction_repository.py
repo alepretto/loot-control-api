@@ -1,8 +1,7 @@
 import uuid
 from typing import Optional
 
-import sqlalchemy
-from sqlmodel import select
+from sqlmodel import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models.finance.category import Category
@@ -57,16 +56,18 @@ class TransactionRepository:
         if date_to is not None:
             stmt = stmt.where(Transaction.date_transaction <= date_to)
 
-        paginated = (
-            stmt.add_columns(sqlalchemy.func.count().over().label("total"))
-            .order_by(Transaction.date_transaction.desc())
-            .offset((page - 1) * page_size)
-            .limit(page_size)
-        )
-        rows = (await self.session.execute(paginated)).all()
-        items = [row[0] for row in rows]
-        total = rows[0][1] if rows else 0
-        return items, total
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total = (await self.session.exec(count_stmt)).one()
+
+        items = (
+            await self.session.exec(
+                stmt.order_by(Transaction.date_transaction.desc())
+                .offset((page - 1) * page_size)
+                .limit(page_size)
+            )
+        ).all()
+
+        return list(items), total
 
     async def save(self, transaction: Transaction) -> Transaction:
         self.session.add(transaction)

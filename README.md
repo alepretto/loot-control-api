@@ -11,6 +11,8 @@ Backend do **Loot Control** — sistema de acompanhamento de gastos, receitas e 
 - **Alembic** — migrations assíncronas
 - **APScheduler** — jobs agendados para cotações e preços de ativos
 - **Supabase** — banco de dados PostgreSQL + autenticação JWT (python-jose)
+- **python-telegram-bot** — integração Telegram Bot e Mini App
+- **httpx** — cliente HTTP assíncrono (OpenRouter, APIs externas)
 
 ## Arquitetura
 
@@ -26,8 +28,14 @@ app/
 ├── services/       # Regras de negócio (orquestra repositórios)
 │   └── finance/
 ├── routers/        # Endpoints HTTP
-│   └── finance/
-└── jobs/           # Workers agendados (cotações, preços de ativos)
+│   ├── finance/
+│   ├── users.py    # /users/me
+│   ├── admin.py    # /admin/* (requer role=admin)
+│   ├── agent.py    # /agent/chat (LLM com tool calling)
+│   ├── bot.py      # /bot/webhook/{token}
+│   └── mini.py     # /mini/auth/telegram
+├── bot/            # Telegram bot: handler, agent, tools, llm, memory, state
+└── jobs/           # Workers agendados (cotações e preços 3x/dia)
 ```
 
 Padrão: **Router → Service → Repository** — cada camada tem responsabilidade única.
@@ -56,6 +64,10 @@ cp .env.example .env
 | `ENVIRONMENT`          | `development` ou `production`                                  |
 | `ALLOWED_ORIGINS`      | Origens CORS permitidas (separadas por vírgula)                |
 | `COINGECKO_API_KEY`    | Chave Demo gratuita do CoinGecko — melhora rate limits         |
+| `OPENROUTER_API_KEY`   | Chave OpenRouter para o agente IA (`/agent/chat`)              |
+| `TELEGRAM_BOT_TOKEN`   | Token do bot Telegram (BotFather)                              |
+| `WEBHOOK_URL`          | URL base da API para o webhook do Telegram (sem trailing slash)|
+| `MINI_APP_URL`         | URL do Mini App Telegram (ex: `https://loot-control.com.br/mini`) |
 
 > A `COINGECKO_API_KEY` é opcional mas recomendada. Cadastre em [coingecko.com/api](https://www.coingecko.com/en/api) (plano Demo é gratuito).
 
@@ -143,7 +155,7 @@ Todos os endpoints requerem autenticação via `Bearer <supabase_jwt>`.
 
 ## Jobs agendados
 
-Rodam **3x/dia** no horário de Brasília (`America/Sao_Paulo`). A cada execução os registros do dia são substituídos pelos valores mais recentes.
+Rodam **3x/dia** no horário de Brasília (`America/Sao_Paulo`). A cada execução os registros do dia são **substituídos** pelos valores mais recentes (upsert).
 
 | Job                | Horários (BRT)    | Fonte                              | Tabela                     |
 |--------------------|-------------------|------------------------------------|----------------------------|
@@ -184,6 +196,9 @@ public.users
 
 finance.exchange_rates   — cotação diária em BRL (USD, EUR)
 finance.asset_prices     — preço diário por símbolo (crypto em USD, ações BR em BRL)
+
+agent.memories           — memória persistente do agente IA por usuário
+agent.messages           — histórico de mensagens do agente por usuário
 ```
 
 **Regras importantes:**
