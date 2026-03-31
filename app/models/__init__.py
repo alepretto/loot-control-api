@@ -3,6 +3,7 @@ from app.models.finance.tag_family import TagFamily
 from app.models.finance.category import Category, CategoryType
 from app.models.finance.tag import Tag
 from app.models.finance.transaction import Transaction, Currencies
+from app.models.finance.payment_method import PaymentMethod, PaymentMethodCategory
 from app.models.finance.exchange_rate import ExchangeRate
 from app.models.finance.asset_price import AssetPrice
 
@@ -14,6 +15,8 @@ __all__ = [
     "Tag",
     "Transaction",
     "Currencies",
+    "PaymentMethod",
+    "PaymentMethodCategory",
     "ExchangeRate",
     "AssetPrice",
 ]
