@@ -12,6 +12,7 @@ class TransactionCreate(BaseModel):
     date_transaction: datetime
     value: float
     currency: Currencies
+    payment_method_id: Optional[uuid.UUID] = None
     quantity: Optional[float] = None
     symbol: Optional[str] = None
     index_rate: Optional[float] = None
@@ -25,6 +26,7 @@ class TransactionRead(BaseModel):
     date_transaction: datetime
     value: float
     currency: Currencies
+    payment_method_id: Optional[uuid.UUID]
     quantity: Optional[float]
     symbol: Optional[str]
     index_rate: Optional[float]
@@ -40,6 +42,7 @@ class TransactionUpdate(BaseModel):
     date_transaction: Optional[datetime] = None
     value: Optional[float] = None
     currency: Optional[Currencies] = None
+    payment_method_id: Optional[uuid.UUID] = None
     quantity: Optional[float] = None
     symbol: Optional[str] = None
     index_rate: Optional[float] = None
@@ -51,6 +54,7 @@ class TransactionFilter(BaseModel):
     category_id: Optional[uuid.UUID] = None
     family_id: Optional[uuid.UUID] = None
     currency: Optional[Currencies] = None
+    payment_method_id: Optional[uuid.UUID] = None
     date_from: Optional[datetime] = None
     date_to: Optional[datetime] = None
     page: int = 1

@@ -41,6 +41,15 @@ class Transaction(SQLModel, table=True):
             nullable=False,
         )
     )
+    payment_method_id: Optional[uuid.UUID] = Field(
+        default=None,
+        sa_column=Column(
+            sa.Uuid(),
+            ForeignKey("finance.payment_methods.id", ondelete="SET NULL"),
+            nullable=True,
+            index=True,
+        ),
+    )
     quantity: Optional[float] = Field(default=None)
     symbol: Optional[str] = Field(default=None)
     index_rate: Optional[float] = Field(default=None)

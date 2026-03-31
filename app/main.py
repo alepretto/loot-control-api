@@ -8,7 +8,7 @@ from app.core.config import settings
 from app.core.database import create_db_and_tables
 from app.jobs.scheduler import setup_scheduler
 from app.routers import admin, agent, bot, mini, users
-from app.routers.finance import categories, market_data, tag_families, tags, transactions
+from app.routers.finance import categories, market_data, payment_methods, tag_families, tags, transactions
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +75,7 @@ app.include_router(tag_families.router)
 app.include_router(categories.router)
 app.include_router(tags.router)
 app.include_router(transactions.router)
+app.include_router(payment_methods.router)
 app.include_router(market_data.router)
 
 
