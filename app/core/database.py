@@ -25,10 +25,13 @@ engine = create_async_engine(
     _build_engine_url(settings.DATABASE_URL),
     connect_args={"statement_cache_size": 0},
     echo=settings.DB_ECHO,
-    pool_pre_ping=True,
-    pool_recycle=300,
-    pool_size=5,
-    max_overflow=5,
+    future=True,
+    # Connection pooling otimizado para Supabase Free Tier (60 conexões max)
+    pool_pre_ping=True,           # Verifica se conexão está ativa antes de usar
+    pool_recycle=1800,            # Recicla conexões a cada 30 minutos (evita stale)
+    pool_timeout=30,              # Timeout de 30s para obter conexão do pool
+    pool_size=3,                  # Conexões permanentes (baixo para free tier)
+    max_overflow=2,               # Conexões extras sob demanda (total max = 5)
 )
 
 AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

@@ -8,7 +8,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.bot.telegram import send_message_to_user
 from app.core.config import settings
 from app.core.database import engine
-from app.models.finance.tag import CategoryType
+from app.models.finance.category import Category
+from app.models.finance.tag import Tag
+from app.models.finance.tag_family import FamilyNature, TagFamily
 from app.models.finance.transaction import Currencies, Transaction
 from app.models.user import User
 from app.services.finance.summary_service import SummaryService
@@ -21,7 +23,6 @@ MONTH_NAMES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
 
 
 def _brl(value: float) -> str:
-    """Format float as Brazilian currency string."""
     formatted = f"{value:,.2f}"
     parts = formatted.split(".")
     integer_part = parts[0].replace(",", ".")
@@ -29,7 +30,6 @@ def _brl(value: float) -> str:
 
 
 async def _get_users_with_telegram(session: AsyncSession) -> list[uuid.UUID]:
-    """Return list of user IDs that have a telegram_id linked."""
     result = await session.exec(
         select(User.id).where(User.telegram_id.is_not(None))  # type: ignore[union-attr]
     )
@@ -37,7 +37,6 @@ async def _get_users_with_telegram(session: AsyncSession) -> list[uuid.UUID]:
 
 
 async def daily_reminder() -> None:
-    """Send a reminder to each user who has no transactions today."""
     if not settings.TELEGRAM_BOT_TOKEN:
         return
 
@@ -74,7 +73,6 @@ async def daily_reminder() -> None:
 
 
 async def weekly_report() -> None:
-    """Send a weekly summary to each linked user."""
     if not settings.TELEGRAM_BOT_TOKEN:
         return
 
@@ -87,35 +85,38 @@ async def weekly_report() -> None:
 
     try:
         async with AsyncSession(engine) as session:
-            from app.models.finance.tag import Tag
-
             user_ids = await _get_users_with_telegram(session)
 
             for user_id in user_ids:
                 query = (
-                    select(Tag.type, func.sum(Transaction.value).label("total"))
+                    select(TagFamily.nature, func.sum(Transaction.value).label("total"))
                     .join(Tag, Transaction.tag_id == Tag.id)
+                    .join(Category, Tag.category_id == Category.id)
+                    .outerjoin(TagFamily, Category.family_id == TagFamily.id)
                     .where(
                         Transaction.user_id == user_id,
                         Transaction.currency == Currencies.BRL,
                         Transaction.date_transaction >= dt_from,
                         Transaction.date_transaction <= dt_to,
                     )
-                    .group_by(Tag.type)
+                    .group_by(TagFamily.nature)
                 )
                 result = await session.exec(query)  # type: ignore[call-overload]
                 rows = result.all()
 
-                income = sum(float(r.total) for r in rows if r[0] == CategoryType.income)
-                outcome = sum(float(r.total) for r in rows if r[0] == CategoryType.outcome)
-                balance = income - outcome
+                income = sum(float(r.total) for r in rows if r[0] == FamilyNature.income)
+                expense = sum(
+                    float(r.total) for r in rows
+                    if r[0] in (FamilyNature.fixed_expense, FamilyNature.variable_expense)
+                )
+                balance = income - expense
                 balance_icon = "💰" if balance >= 0 else "⚠️"
 
                 text = (
                     f"📊 *Relatório Semanal*\n"
                     f"{week_start.strftime('%d/%m')} a {week_end.strftime('%d/%m/%Y')}\n\n"
                     f"💚 Entradas: {_brl(income)}\n"
-                    f"🔴 Saídas: {_brl(outcome)}\n"
+                    f"🔴 Saídas: {_brl(expense)}\n"
                     f"{balance_icon} Saldo: {_brl(balance)}"
                 )
                 await send_message_to_user(session, user_id, text)
@@ -124,7 +125,6 @@ async def weekly_report() -> None:
 
 
 async def monthly_report() -> None:
-    """Send a monthly summary to each linked user."""
     if not settings.TELEGRAM_BOT_TOKEN:
         return
 
@@ -148,9 +148,11 @@ async def monthly_report() -> None:
                 text = (
                     f"📅 *Relatório de {MONTH_NAMES[month - 1]} {year}*\n\n"
                     f"💚 Entradas: {_brl(data['total_income'])}\n"
-                    f"🔴 Saídas: {_brl(data['total_outcome'])}\n"
+                    f"🔴 Fixos: {_brl(data['total_fixed_expense'])}\n"
+                    f"🟡 Variáveis: {_brl(data['total_variable_expense'])}\n"
+                    f"📈 Investido: {_brl(data['total_investment'])}\n"
                     f"{balance_icon} Saldo: {_brl(data['balance'])}\n"
-                    f"📈 Saving Rate: {data['saving_rate']:.1f}%\n"
+                    f"💹 Saving Rate: {data['saving_rate']:.1f}%\n"
                 )
                 if top_lines:
                     text += f"\n*Top gastos:*\n{top_lines}"

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from datetime import UTC, datetime
 from typing import Optional
@@ -5,8 +7,7 @@ from typing import Optional
 from fastapi import HTTPException, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models.finance.category import CategoryType
-from app.models.finance.tag import Tag
+from app.models.finance.tag import IncomeType, Tag
 from app.repositories.finance.tag_repository import TagRepository
 from app.schemas.finance.tag import TagCreate, TagUpdate
 
@@ -32,10 +33,10 @@ class TagService:
         self,
         user_id: uuid.UUID,
         category_id: Optional[uuid.UUID] = None,
-        type: Optional[CategoryType] = None,
+        income_type: Optional[IncomeType] = None,
         is_active: Optional[bool] = None,
     ) -> list[Tag]:
-        return await self.repo.list(user_id, category_id=category_id, type=type, is_active=is_active)
+        return await self.repo.list(user_id, category_id=category_id, income_type=income_type, is_active=is_active)
 
     async def update(
         self, tag_id: uuid.UUID, user_id: uuid.UUID, data: TagUpdate

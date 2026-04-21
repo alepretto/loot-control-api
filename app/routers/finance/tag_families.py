@@ -1,11 +1,12 @@
 import uuid
-from typing import Annotated, List
+from typing import Annotated, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.database import get_session
 from app.core.security import get_current_user_id
+from app.models.finance.tag_family import FamilyNature
 from app.schemas.finance.tag_family import TagFamilyCreate, TagFamilyRead, TagFamilyUpdate
 from app.services.finance.tag_family_service import TagFamilyService
 
@@ -25,8 +26,9 @@ async def create_tag_family(
 async def list_tag_families(
     session: Annotated[AsyncSession, Depends(get_session)],
     current_user_id: Annotated[str, Depends(get_current_user_id)],
+    nature: Optional[FamilyNature] = Query(default=None),
 ):
-    return await TagFamilyService(session).list(uuid.UUID(current_user_id))
+    return await TagFamilyService(session).list(uuid.UUID(current_user_id), nature)
 
 
 @router.get("/{family_id}", response_model=TagFamilyRead)

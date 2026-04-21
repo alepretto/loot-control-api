@@ -1,12 +1,18 @@
 import uuid
 from datetime import UTC, datetime
+from enum import Enum
+from typing import Optional
 
 import sqlalchemy as sa
 from sqlalchemy import Column, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy import Enum as SAEnum
 from sqlmodel import Field, SQLModel
 
-from app.models.finance.category import CategoryType
+
+class IncomeType(str, Enum):
+    active = "active"
+    passive = "passive"
+    sporadic = "sporadic"
 
 
 class Tag(SQLModel, table=True):
@@ -26,14 +32,15 @@ class Tag(SQLModel, table=True):
             index=True,
         )
     )
-    type: CategoryType = Field(
-        sa_column=Column(
-            SAEnum(CategoryType, name="categorytype", schema="finance"),
-            nullable=False,
-        )
-    )
     name: str
     is_active: bool = Field(default=True)
+    income_type: Optional[IncomeType] = Field(
+        default=None,
+        sa_column=Column(
+            SAEnum(IncomeType, name="incometype", schema="finance", create_type=False),
+            nullable=True,
+        ),
+    )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         sa_column=Column(DateTime(timezone=True), nullable=False),

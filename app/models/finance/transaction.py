@@ -41,19 +41,39 @@ class Transaction(SQLModel, table=True):
             nullable=False,
         )
     )
-    payment_method_id: Optional[uuid.UUID] = Field(
+    account_id: uuid.UUID = Field(
+        sa_column=Column(
+            sa.Uuid(),
+            ForeignKey("finance.accounts.id", ondelete="SET NULL"),
+            nullable=False,
+            index=True,
+        ),
+    )
+    description: Optional[str] = Field(default=None)
+    invoice_id: Optional[uuid.UUID] = Field(
         default=None,
         sa_column=Column(
             sa.Uuid(),
-            ForeignKey("finance.payment_methods.id", ondelete="SET NULL"),
+            ForeignKey("finance.invoices.id", ondelete="SET NULL"),
             nullable=True,
             index=True,
         ),
     )
+    recurrence_id: Optional[uuid.UUID] = Field(
+        default=None,
+        sa_column=Column(
+            sa.Uuid(),
+            ForeignKey("finance.recurrence_rules.id", ondelete="SET NULL"),
+            nullable=True,
+            index=True,
+        ),
+    )
+    is_recurring: bool = Field(default=False)
     quantity: Optional[float] = Field(default=None)
     symbol: Optional[str] = Field(default=None)
     index_rate: Optional[float] = Field(default=None)
     index: Optional[str] = Field(default=None)
+    index_percentage: Optional[float] = Field(default=None)
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         sa_column=Column(DateTime(timezone=True), nullable=False),

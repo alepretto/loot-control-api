@@ -21,8 +21,10 @@ class TagFamilyRepository:
         result = await self.session.exec(stmt)
         return result.first()
 
-    async def list(self, user_id: uuid.UUID) -> list[TagFamily]:
+    async def list(self, user_id: uuid.UUID, nature: object = None) -> list[TagFamily]:
         stmt = select(TagFamily).where(TagFamily.user_id == user_id)
+        if nature is not None:
+            stmt = stmt.where(TagFamily.nature == nature)
         result = await self.session.exec(stmt)
         return list(result.all())
 

@@ -8,7 +8,21 @@ from app.core.config import settings
 from app.core.database import create_db_and_tables
 from app.jobs.scheduler import setup_scheduler
 from app.routers import admin, agent, bot, mini, users
-from app.routers.finance import categories, market_data, payment_methods, tag_families, tags, transactions
+from app.routers.finance import (
+    accounts,
+    budgets,
+    categories,
+    credit_cards,
+    invoices,
+    liabilities,
+    market_data,
+    net_worth,
+    recurrences,
+    tag_families,
+    tags,
+    transactions,
+    payment_methods,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +89,14 @@ app.include_router(tag_families.router)
 app.include_router(categories.router)
 app.include_router(tags.router)
 app.include_router(transactions.router)
+app.include_router(accounts.router)
+app.include_router(credit_cards.router)
+app.include_router(invoices.router)
 app.include_router(payment_methods.router)
+app.include_router(liabilities.router)
+app.include_router(recurrences.router)
+app.include_router(budgets.router)
+app.include_router(net_worth.router)
 app.include_router(market_data.router)
 
 

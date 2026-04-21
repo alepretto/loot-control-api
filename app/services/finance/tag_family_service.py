@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from datetime import UTC, datetime
 from typing import Optional
@@ -5,7 +7,7 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models.finance.tag_family import TagFamily
+from app.models.finance.tag_family import FamilyNature, TagFamily
 from app.repositories.finance.tag_family_repository import TagFamilyRepository
 from app.schemas.finance.tag_family import TagFamilyCreate, TagFamilyUpdate
 
@@ -24,8 +26,8 @@ class TagFamilyService:
     async def get_by_id(self, family_id: uuid.UUID, user_id: uuid.UUID) -> Optional[TagFamily]:
         return await self.repo.get_by_id(family_id, user_id)
 
-    async def list(self, user_id: uuid.UUID) -> list[TagFamily]:
-        return await self.repo.list(user_id)
+    async def list(self, user_id: uuid.UUID, nature: Optional[FamilyNature] = None) -> list[TagFamily]:
+        return await self.repo.list(user_id, nature)
 
     async def update(
         self,

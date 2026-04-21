@@ -1,16 +1,10 @@
 import uuid
 from datetime import UTC, datetime
-from enum import Enum
 from typing import Optional
 
 import sqlalchemy as sa
 from sqlalchemy import Column, DateTime, ForeignKey
 from sqlmodel import Field, SQLModel
-
-
-class CategoryType(str, Enum):
-    outcome = "outcome"
-    income = "income"
 
 
 class Category(SQLModel, table=True):

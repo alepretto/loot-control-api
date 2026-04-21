@@ -4,8 +4,7 @@ from typing import Optional
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models.finance.category import CategoryType
-from app.models.finance.tag import Tag
+from app.models.finance.tag import IncomeType, Tag
 
 
 class TagRepository:
@@ -21,14 +20,14 @@ class TagRepository:
         self,
         user_id: uuid.UUID,
         category_id: Optional[uuid.UUID] = None,
-        type: Optional[CategoryType] = None,
+        income_type: Optional[IncomeType] = None,
         is_active: Optional[bool] = None,
     ) -> list[Tag]:
         stmt = select(Tag).where(Tag.user_id == user_id)
         if category_id is not None:
             stmt = stmt.where(Tag.category_id == category_id)
-        if type is not None:
-            stmt = stmt.where(Tag.type == type)
+        if income_type is not None:
+            stmt = stmt.where(Tag.income_type == income_type)
         if is_active is not None:
             stmt = stmt.where(Tag.is_active == is_active)
         result = await self.session.exec(stmt)

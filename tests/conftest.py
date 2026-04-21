@@ -91,6 +91,36 @@ async def test_user(session: AsyncSession) -> User:
 
 
 # ---------------------------------------------------------------------------
+# Test account — reuse to avoid conflicts
+# ---------------------------------------------------------------------------
+
+@pytest_asyncio.fixture
+async def test_account(client: AsyncClient, test_user: User) -> dict:
+    res = await client.post("/finance/accounts/", json={
+        "name": "Conta Corrente",
+        "type": "checking",
+        "currency": "BRL",
+    })
+    assert res.status_code == 201
+    return res.json()
+
+
+# ---------------------------------------------------------------------------
+# Test account for credit card
+# ---------------------------------------------------------------------------
+
+@pytest_asyncio.fixture
+async def test_account_credit(client: AsyncClient, test_user: User) -> dict:
+    res = await client.post("/finance/accounts/", json={
+        "name": "Cartão Nubank",
+        "type": "digital",
+        "currency": "BRL",
+    })
+    assert res.status_code == 201
+    return res.json()
+
+
+# ---------------------------------------------------------------------------
 # HTTP client with dependency overrides
 # ---------------------------------------------------------------------------
 

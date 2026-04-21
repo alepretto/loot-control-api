@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from datetime import UTC, datetime
 from typing import Optional
@@ -15,11 +17,11 @@ class PaymentMethodService:
         self.repo = PaymentMethodRepository(session)
 
     async def create(self, user_id: uuid.UUID, data: PaymentMethodCreate) -> PaymentMethod:
-        existing = await self.repo.get_by_name(user_id, data.name)
+        existing = await self.repo.get_by_name(user_id, data.name, data.account_id)
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Já existe um método de pagamento com este nome",
+                detail="Já existe um método de pagamento com este nome para esta conta",
             )
         pm = PaymentMethod(user_id=user_id, **data.model_dump())
         return await self.repo.save(pm)
@@ -36,6 +38,16 @@ class PaymentMethodService:
         pm = await self.repo.get_by_id(pm_id, user_id)
         if not pm:
             return None
+        
+        # Check for duplicate name if name is being changed
+        if data.name is not None and data.name != pm.name:
+            existing = await self.repo.get_by_name(user_id, data.name, pm.account_id)
+            if existing and existing.id != pm_id:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Já existe um método de pagamento com este nome para esta conta",
+                )
+        
         for key, value in data.model_dump(exclude_unset=True).items():
             setattr(pm, key, value)
         pm.updated_at = datetime.now(UTC)

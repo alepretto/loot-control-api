@@ -6,7 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.database import get_session
 from app.core.security import get_current_user_id
-from app.models.finance.category import CategoryType
+from app.models.finance.tag import IncomeType
 from app.schemas.finance.tag import TagCreate, TagRead, TagUpdate
 from app.services.finance.tag_service import TagService
 
@@ -27,11 +27,11 @@ async def list_tags(
     session: Annotated[AsyncSession, Depends(get_session)],
     current_user_id: Annotated[str, Depends(get_current_user_id)],
     category_id: Optional[uuid.UUID] = Query(default=None),
-    type: Optional[CategoryType] = Query(default=None),
+    income_type: Optional[IncomeType] = Query(default=None),
     is_active: Optional[bool] = Query(default=None),
 ):
     return await TagService(session).list(
-        uuid.UUID(current_user_id), category_id=category_id, type=type, is_active=is_active
+        uuid.UUID(current_user_id), category_id=category_id, income_type=income_type, is_active=is_active
     )
 
 

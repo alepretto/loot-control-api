@@ -19,11 +19,15 @@ class PaymentMethodRepository:
         result = await self.session.exec(stmt)
         return result.first()
 
-    async def get_by_name(self, user_id: uuid.UUID, name: str) -> Optional[PaymentMethod]:
+    async def get_by_name(
+        self, user_id: uuid.UUID, name: str, account_id: Optional[uuid.UUID] = None
+    ) -> Optional[PaymentMethod]:
         stmt = select(PaymentMethod).where(
             PaymentMethod.user_id == user_id,
             PaymentMethod.name == name,
         )
+        if account_id is not None:
+            stmt = stmt.where(PaymentMethod.account_id == account_id)
         result = await self.session.exec(stmt)
         return result.first()
 

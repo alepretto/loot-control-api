@@ -6,6 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models.finance.category import Category
 from app.models.finance.tag import Tag
+from app.models.finance.tag_family import TagFamily, FamilyNature
 from app.models.finance.transaction import Currencies, Transaction
 
 
@@ -29,7 +30,10 @@ class TransactionRepository:
         tag_id: Optional[uuid.UUID] = None,
         category_id: Optional[uuid.UUID] = None,
         family_id: Optional[uuid.UUID] = None,
+        nature: Optional[FamilyNature] = None,
         currency: Optional[Currencies] = None,
+        account_id: Optional[uuid.UUID] = None,
+        invoice_id: Optional[uuid.UUID] = None,
         date_from: Optional[object] = None,
         date_to: Optional[object] = None,
         page: int = 1,
@@ -49,8 +53,19 @@ class TransactionRepository:
             stmt = stmt.join(Category, Tag.category_id == Category.id).where(
                 Category.family_id == family_id
             )
+        if nature is not None:
+            if family_id is None and category_id is None:
+                stmt = stmt.join(Tag, Transaction.tag_id == Tag.id)
+                stmt = stmt.join(Category, Tag.category_id == Category.id)
+            stmt = stmt.join(TagFamily, Category.family_id == TagFamily.id).where(
+                TagFamily.nature == nature
+            )
         if currency is not None:
             stmt = stmt.where(Transaction.currency == currency)
+        if account_id is not None:
+            stmt = stmt.where(Transaction.account_id == account_id)
+        if invoice_id is not None:
+            stmt = stmt.where(Transaction.invoice_id == invoice_id)
         if date_from is not None:
             stmt = stmt.where(Transaction.date_transaction >= date_from)
         if date_to is not None:
