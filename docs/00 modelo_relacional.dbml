@@ -1,0 +1,150 @@
+
+Table users {
+    id uuid [pk]
+    first_name string [not null]
+    last_name string [not null]
+    email string [not null]
+    password string [not null]
+
+    created_at datetime [default: `now()`, not null]
+    updated_at datetime [default: `now()`, not null]
+    
+}
+
+
+// ==========
+// Tipos de Contas
+Enum accounts_type {
+    bank [note: 'Conta Corrente']
+    wallet [note: 'Carteira']
+    digital [note: 'Conta Digital']
+    benefits [note: 'Benefícios']
+}
+
+
+// Contas
+Table accounts {
+    id uuid [pk]
+    user_id uuid [ref: > users.id, not null]
+    label string [not null]
+    type accounts_type [not null]
+    logo string [null]
+    created_at datetime [default: `now()`, not null]
+    updated_at datetime [default: `now()`, not null]
+}
+
+
+// ==========
+// Cartões de Crédito
+Table credit_cards {
+    id uuid [pk]
+    user_id uuid [ref: > users.id, not null]
+    account_id uuid [ref: > accounts.id, not null]
+
+    label string [not null]
+    due_date int [not null]
+    end_date_offset int [not null]
+
+    is_active boolean [not null, default: true]
+
+    created_at datetime [default: `now()`, not null]
+    updated_at datetime [default: `now()`, not null]
+}
+
+
+// ==========
+
+
+Enum category_natures {
+    fixed  [note: 'Gasto Fixo']
+    variable [note: 'Gasto Variável']
+    investment [note: 'Investimentos']
+    revenue [note: 'Receitas']
+}
+
+// Cateorias
+Table categories {
+    id uuid [pk]
+    user_id uuid [ref: > users.id, not null]
+    label string [not null]
+    nature category_natures [not null]
+    created_at datetime [default: `now()`, not null]
+    updated_at datetime [default: `now()`, not null]
+}
+
+
+// ==========
+// Subcategorias
+Table subcategories {
+    id uuid [pk]
+    user_id uuid [ref: > users.id, not null]
+    category_id uuid [ref: > categories.id, not null]
+    label string [not null]
+    is_active boolean [not null, default: true]
+    created_at datetime [default: `now()`, not null]
+    updated_at datetime [default: `now()`, not null]
+}
+
+
+// ==========
+// Moedas
+Table currencies {
+    id uuid [pk]
+    label string [not null]
+    symbol string [not null]
+    created_at datetime [default: `now()`, not null]
+    updated_at datetime [default: `now()`, not null]
+}
+
+
+// ==========
+// Transações
+Table transactions {
+    id uuid [pk]
+    user_id uuid [ref: > users.id, not null]
+    date_transaction datetime [not null, default: `now()`]
+    type string [note: 'outcome | income']
+    subcategory_id uuid [ref: > subcategories.id, not null]
+    account_id uuid [ref: > accounts.id, not null]
+    currency_id uuid [ref: > currencies.id, not null]
+
+    description string [null]
+    amount double [not null]
+
+    payment_methods string [note: 'pix | debit | credit']
+    statement_id uuid [ref: > credit_card_statements.id, null]
+
+    created_at datetime [default: `now()`, not null]
+    updated_at datetime [default: `now()`, not null]
+}
+
+
+// ==========
+// Fatura do cartão de crédito
+Table credit_card_statements {
+    id uuid [pk]
+    user_id uuid [ref: > users.id, not null]
+    end_date datetime [not null]
+    is_paid boolean [not null, default: false]
+    credit_card_id uuid [ref: > credit_cards.id, not null]
+
+    total_amount double [null]
+
+    created_at datetime [default: `now()`, not null]
+    updated_at datetime [default: `now()`, not null]
+}
+
+
+// ==========
+// Investimentos Realizados
+Table investment_ledger {
+    id uuid [pk]
+    user_id uuid [ref: > users.id, not null]
+    transaction_id uuid [ref: - transactions.id, not null]
+    symbol string [not null]
+    quantity double [not null]
+    index string [null]
+    index_rate double [null]
+}
+
+
