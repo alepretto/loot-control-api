@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from app.core.database import create_db_and_tables
 from app.models.user import User  # noqa: F401 — ensure model registered
+from app.models.account import Account  # noqa: F401
 
 
 @asynccontextmanager
@@ -21,8 +22,10 @@ def create_app() -> FastAPI:
     )
 
     from app.routers import users
+    from app.routers import accounts
 
     application.include_router(users.router)
+    application.include_router(accounts.router)
 
     return application
 

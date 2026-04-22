@@ -15,7 +15,7 @@ from app.schemas.user import (
 )
 from app.services import user_service
 
-router = APIRouter()
+router = APIRouter(tags=["Users"])
 
 
 @router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)

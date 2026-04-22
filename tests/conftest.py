@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from app.main import create_app
 from app.core.security import hash_password, create_access_token
 from app.models.user import User
+from app.models.account import Account  # noqa: F401
 
 
 @pytest.fixture(name="engine")
