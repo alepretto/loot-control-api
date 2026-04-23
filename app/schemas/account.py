@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
-from app.models.account_type import AccountType
+from app.models.account import AccountType
 
 
 # --- Request schemas ---

@@ -2,8 +2,7 @@ from uuid import UUID
 
 from sqlmodel import Session
 
-from app.models.account import Account
-from app.models.account_type import AccountType
+from app.models.account import Account, AccountType
 from app.repositories import account_repository
 
 

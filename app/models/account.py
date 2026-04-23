@@ -1,11 +1,18 @@
 from datetime import datetime, timezone
+from enum import StrEnum
 from uuid import UUID
 
 from sqlmodel import Field
 import uuid6
 
 from app.models.base import BaseModel
-from app.models.account_type import AccountType
+
+
+class AccountType(StrEnum):
+    bank = "bank"
+    wallet = "wallet"
+    digital = "digital"
+    benefits = "benefits"
 
 
 class AccountBase(BaseModel):
