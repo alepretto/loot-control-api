@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.database import create_db_and_tables
 from app.models.user import User  # noqa: F401 — ensure model registered
@@ -19,6 +20,14 @@ def create_app() -> FastAPI:
         version="2.0.0",
         description="Sistema de gestão financeira pessoal",
         lifespan=lifespan,
+    )
+
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:5173"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     from app.routers import users
