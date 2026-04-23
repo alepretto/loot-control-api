@@ -9,6 +9,7 @@ from app.models.user import User
 from app.models.account import Account  # noqa: F401
 from app.models.category import Category  # noqa: F401
 from app.models.subcategory import Subcategory  # noqa: F401
+from app.models.currency import Currency  # noqa: F401
 
 
 @pytest.fixture(name="engine")

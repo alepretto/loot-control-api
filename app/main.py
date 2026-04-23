@@ -8,6 +8,7 @@ from app.models.user import User  # noqa: F401 — ensure model registered
 from app.models.account import Account  # noqa: F401
 from app.models.category import Category  # noqa: F401
 from app.models.subcategory import Subcategory  # noqa: F401
+from app.models.currency import Currency  # noqa: F401
 
 
 @asynccontextmanager
@@ -36,11 +37,13 @@ def create_app() -> FastAPI:
     from app.routers import accounts
     from app.routers import categories
     from app.routers import subcategories
+    from app.routers import currencies
 
     application.include_router(users.router)
     application.include_router(accounts.router)
     application.include_router(categories.router)
     application.include_router(subcategories.router)
+    application.include_router(currencies.router)
 
     return application
 
