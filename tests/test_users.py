@@ -58,7 +58,7 @@ class TestSignup:
             "/signup",
             json={"first_name": "User", "last_name": "Short", "email": "short@test.com", "password": "ab"},
         )
-        assert response.status_code == 201
+        assert response.status_code == 422
 
 
 class TestLogin:
