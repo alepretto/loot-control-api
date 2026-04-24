@@ -10,6 +10,9 @@ from app.models.account import Account  # noqa: F401
 from app.models.category import Category  # noqa: F401
 from app.models.subcategory import Subcategory  # noqa: F401
 from app.models.currency import Currency  # noqa: F401
+from app.models.credit_card import CreditCard  # noqa: F401
+from app.models.credit_card_statement import CreditCardStatement  # noqa: F401
+from app.models.transaction import Transaction  # noqa: F401
 
 
 @pytest.fixture(name="engine")
