@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
 
 from app.core.database import get_session
@@ -44,9 +44,15 @@ def create_transaction(
 
 @router.get("/transactions", response_model=list[TransactionResponse])
 def list_transactions(
+    account_id: UUID | None = Query(None, description="Filter by account ID"),
+    statement_id: UUID | None = Query(None, description="Filter by credit card statement ID"),
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
+    if account_id:
+        return transaction_service.list_transactions_by_account(session, user_id=current_user.id, account_id=account_id)
+    if statement_id:
+        return transaction_service.list_transactions_by_statement(session, user_id=current_user.id, statement_id=statement_id)
     return transaction_service.list_transactions(session, user_id=current_user.id)
 
 
