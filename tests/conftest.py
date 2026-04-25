@@ -13,6 +13,7 @@ from app.models.currency import Currency  # noqa: F401
 from app.models.credit_card import CreditCard  # noqa: F401
 from app.models.credit_card_statement import CreditCardStatement  # noqa: F401
 from app.models.transaction import Transaction  # noqa: F401
+from app.models.investment_ledger import InvestmentLedger  # noqa: F401
 
 
 @pytest.fixture(name="engine")
