@@ -14,6 +14,11 @@ def get_all_by_user(session: Session, user_id: UUID) -> list[Category]:
     return list(session.exec(statement).all())
 
 
+def get_by_user_and_label(session: Session, user_id: UUID, label: str) -> Category | None:
+    statement = select(Category).where(Category.user_id == user_id, Category.label == label)
+    return session.exec(statement).first()
+
+
 def create(session: Session, category: Category) -> Category:
     session.add(category)
     session.commit()

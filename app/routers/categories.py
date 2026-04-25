@@ -28,7 +28,12 @@ def create_category(
             nature=body.nature,
         )
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        msg = str(e)
+        if "already exists" in msg:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=msg
+            )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg)
     return category
 
 
@@ -105,4 +110,12 @@ def delete_category(
             detail="Not authorized to delete this category",
         )
 
-    category_service.delete_category(session, category_id)
+    try:
+        category_service.delete_category(session, category_id)
+    except ValueError as e:
+        msg = str(e)
+        if "subcategories" in msg:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=msg
+            )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
