@@ -13,6 +13,8 @@ from app.models.credit_card import CreditCard  # noqa: F401
 from app.models.credit_card_statement import CreditCardStatement  # noqa: F401
 from app.models.transaction import Transaction  # noqa: F401
 from app.models.investment_ledger import InvestmentLedger  # noqa: F401
+from app.models.asset_price import AssetPrice  # noqa: F401
+from app.models.exchange_rate import ExchangeRate  # noqa: F401
 
 
 @asynccontextmanager
@@ -46,6 +48,8 @@ def create_app() -> FastAPI:
     from app.routers import credit_card_statements
     from app.routers import transactions
     from app.routers import investment_ledger
+    from app.routers import asset_prices
+    from app.routers import exchange_rates
 
     application.include_router(users.router)
     application.include_router(accounts.router)
@@ -56,6 +60,8 @@ def create_app() -> FastAPI:
     application.include_router(credit_card_statements.router)
     application.include_router(transactions.router)
     application.include_router(investment_ledger.router)
+    application.include_router(asset_prices.router)
+    application.include_router(exchange_rates.router)
 
     return application
 
