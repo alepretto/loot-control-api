@@ -17,5 +17,7 @@ class InvestmentLedger(BaseModel, table=True):
     quantity: float
     index: str | None = None
     index_rate: float | None = None
+    currency: str = Field(default="BRL", max_length=10)
+    purchase_exchange_rate: float | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

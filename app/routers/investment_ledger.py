@@ -1,6 +1,7 @@
+from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
 
 from app.core.database import get_session
@@ -31,6 +32,8 @@ def create_investment(
             quantity=body.quantity,
             index=body.index,
             index_rate=body.index_rate,
+            currency=body.currency,
+            purchase_exchange_rate=body.purchase_exchange_rate,
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -43,6 +46,26 @@ def list_investments(
     current_user: User = Depends(get_current_user),
 ):
     return investment_ledger_service.list_investments(session, user_id=current_user.id)
+
+
+@router.get("/investments/portfolio")
+def get_portfolio_summary(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    return investment_ledger_service.get_portfolio_summary(session, current_user.id)
+
+
+@router.get("/investments/portfolio/timeline")
+def get_portfolio_timeline(
+    start_date: date | None = Query(None),
+    end_date: date | None = Query(None),
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    return investment_ledger_service.get_portfolio_timeline(
+        session, current_user.id, start_date=start_date, end_date=end_date
+    )
 
 
 @router.get("/investments/{investment_id}", response_model=InvestmentLedgerResponse)
@@ -92,6 +115,8 @@ def update_investment(
             quantity=body.quantity,
             index=body.index,
             index_rate=body.index_rate,
+            currency=body.currency,
+            purchase_exchange_rate=body.purchase_exchange_rate,
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

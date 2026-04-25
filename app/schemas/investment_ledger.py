@@ -13,6 +13,8 @@ class InvestmentLedgerCreate(BaseModel):
     quantity: float
     index: str | None = None
     index_rate: float | None = None
+    currency: str = "BRL"
+    purchase_exchange_rate: float | None = None
 
     @field_validator("symbol")
     @classmethod
@@ -35,6 +37,8 @@ class InvestmentLedgerUpdate(BaseModel):
     quantity: float | None = None
     index: str | None = None
     index_rate: float | None = None
+    currency: str | None = None
+    purchase_exchange_rate: float | None = None
 
 
 # --- Response schemas ---
@@ -48,6 +52,8 @@ class InvestmentLedgerResponse(BaseModel):
     quantity: float
     index: str | None
     index_rate: float | None
+    currency: str
+    purchase_exchange_rate: float | None
     created_at: datetime
     updated_at: datetime
 
