@@ -1,0 +1,36 @@
+meta {
+  name: Create Asset Price
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/asset-prices
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+body:json {
+  {
+    "symbol": "PETR4.SA",
+    "price_date": "2026-04-25",
+    "price": 42.50,
+    "currency": "BRL"
+  }
+}
+
+script:post-response {
+  const data = res.body;
+  if (data.id) {
+    bru.setVar("asset_price_id", data.id);
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

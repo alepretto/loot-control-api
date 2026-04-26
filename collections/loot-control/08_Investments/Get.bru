@@ -1,0 +1,20 @@
+meta {
+  name: Get Investment
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/investments/{{investment_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

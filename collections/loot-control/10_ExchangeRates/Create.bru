@@ -1,0 +1,36 @@
+meta {
+  name: Create Exchange Rate
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/exchange-rates
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+body:json {
+  {
+    "from_currency": "USD",
+    "to_currency": "BRL",
+    "rate_date": "2026-04-25",
+    "rate": 5.85
+  }
+}
+
+script:post-response {
+  const data = res.body;
+  if (data.id) {
+    bru.setVar("exchange_rate_id", data.id);
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,20 @@
+meta {
+  name: List Transactions
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/transactions?target_currency=BRL
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

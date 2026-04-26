@@ -1,0 +1,20 @@
+meta {
+  name: List Asset Prices
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/asset-prices?symbol=PETR4.SA
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

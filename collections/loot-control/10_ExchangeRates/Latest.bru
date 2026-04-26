@@ -1,0 +1,20 @@
+meta {
+  name: Latest Exchange Rate
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/exchange-rates/latest?from_currency=USD&to_currency=BRL
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,20 @@
+meta {
+  name: Get Exchange Rate
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/exchange-rates/{{exchange_rate_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

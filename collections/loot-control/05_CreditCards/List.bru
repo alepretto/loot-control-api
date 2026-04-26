@@ -1,0 +1,20 @@
+meta {
+  name: List Credit Cards
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/credit-cards
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

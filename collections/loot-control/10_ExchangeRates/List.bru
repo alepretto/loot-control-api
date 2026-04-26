@@ -1,0 +1,20 @@
+meta {
+  name: List Exchange Rates
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/exchange-rates?from_currency=USD&to_currency=BRL
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

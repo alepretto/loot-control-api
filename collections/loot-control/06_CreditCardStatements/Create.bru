@@ -1,0 +1,36 @@
+meta {
+  name: Create Statement
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/credit-card-statements
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+body:json {
+  {
+    "credit_card_id": "{{credit_card_id}}",
+    "end_date": "2026-04-25T00:00:00",
+    "is_paid": false,
+    "total_amount": 2500.00
+  }
+}
+
+script:post-response {
+  const data = res.body;
+  if (data.id) {
+    bru.setVar("statement_id", data.id);
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

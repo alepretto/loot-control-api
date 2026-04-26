@@ -1,0 +1,20 @@
+meta {
+  name: List Statements
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/credit-card-statements
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

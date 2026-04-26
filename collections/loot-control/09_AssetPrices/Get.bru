@@ -1,0 +1,20 @@
+meta {
+  name: Get Asset Price
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/asset-prices/{{asset_price_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

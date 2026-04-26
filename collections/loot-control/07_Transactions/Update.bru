@@ -1,0 +1,27 @@
+meta {
+  name: Update Transaction
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/transactions/{{transaction_id}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+body:json {
+  {
+    "description": "Almoço no restaurante - reembolsado",
+    "amount": 85.50
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

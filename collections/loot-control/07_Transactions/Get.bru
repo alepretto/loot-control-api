@@ -1,0 +1,20 @@
+meta {
+  name: Get Transaction
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/transactions/{{transaction_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

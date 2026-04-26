@@ -1,0 +1,20 @@
+meta {
+  name: Delete Subcategory
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/subcategories/{{subcategory_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

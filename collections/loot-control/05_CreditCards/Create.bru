@@ -1,0 +1,37 @@
+meta {
+  name: Create Credit Card
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/credit-cards
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+body:json {
+  {
+    "account_id": "{{account_id}}",
+    "label": "Nubank UV",
+    "due_date": 5,
+    "end_date_offset": 5,
+    "is_active": true
+  }
+}
+
+script:post-response {
+  const data = res.body;
+  if (data.id) {
+    bru.setVar("credit_card_id", data.id);
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

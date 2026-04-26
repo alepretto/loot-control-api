@@ -1,0 +1,20 @@
+meta {
+  name: Latest Asset Price
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/asset-prices/latest?symbol=PETR4.SA
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

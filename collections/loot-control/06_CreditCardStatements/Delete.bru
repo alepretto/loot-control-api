@@ -1,0 +1,20 @@
+meta {
+  name: Delete Statement
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/credit-card-statements/{{statement_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

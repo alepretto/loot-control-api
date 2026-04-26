@@ -1,0 +1,20 @@
+meta {
+  name: Portfolio Timeline
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/investments/portfolio/timeline?start_date=2025-01-01&end_date=2026-04-25
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

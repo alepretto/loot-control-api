@@ -1,0 +1,26 @@
+meta {
+  name: Update Investment
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/investments/{{investment_id}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+body:json {
+  {
+    "quantity": 150
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

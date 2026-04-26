@@ -1,0 +1,20 @@
+meta {
+  name: Exchange Rate On Date
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/exchange-rates/on-date?from_currency=USD&to_currency=BRL&rate_date=2026-04-25
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

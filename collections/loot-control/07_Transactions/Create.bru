@@ -1,0 +1,40 @@
+meta {
+  name: Create Transaction
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/transactions
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+body:json {
+  {
+    "date_transaction": "2026-04-25T00:00:00",
+    "type": "outcome",
+    "subcategory_id": "{{subcategory_id}}",
+    "account_id": "{{account_id}}",
+    "currency_id": "{{currency_id}}",
+    "description": "Almoço no restaurante",
+    "amount": 85.50,
+    "payment_methods": "pix"
+  }
+}
+
+script:post-response {
+  const data = res.body;
+  if (data.id) {
+    bru.setVar("transaction_id", data.id);
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

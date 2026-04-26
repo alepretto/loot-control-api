@@ -1,0 +1,27 @@
+meta {
+  name: Update Credit Card
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/credit-cards/{{credit_card_id}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+body:json {
+  {
+    "label": "Nubank UV - Platinum",
+    "is_active": true
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

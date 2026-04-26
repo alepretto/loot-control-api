@@ -1,0 +1,27 @@
+meta {
+  name: Update Statement
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/credit-card-statements/{{statement_id}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{auth_token}}
+}
+
+body:json {
+  {
+    "is_paid": true,
+    "total_amount": 2400.00
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
