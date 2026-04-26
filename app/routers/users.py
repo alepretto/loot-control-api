@@ -10,6 +10,7 @@ from app.schemas.user import (
     LoginRequest,
     TokenResponse,
     UserCreate,
+    UserPreferencesUpdate,
     UserResponse,
     UserUpdate,
 )
@@ -45,6 +46,17 @@ def login(body: LoginRequest, session: Session = Depends(get_session)):
 @router.get("/users/me", response_model=UserResponse)
 def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.patch("/users/me/preferences", response_model=UserResponse)
+def update_my_preferences(
+    body: UserPreferencesUpdate,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    return user_service.update_preferences(
+        session, current_user, display_currency_id=body.display_currency_id
+    )
 
 
 @router.get("/users", response_model=list[UserResponse])

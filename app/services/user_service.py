@@ -44,3 +44,15 @@ def get_user_by_id(session: Session, user_id: UUID) -> User:
 
 def list_users(session: Session) -> list[User]:
     return user_repository.get_all(session)
+
+
+def update_preferences(
+    session: Session,
+    user: User,
+    display_currency_id: UUID | None,
+) -> User:
+    user.display_currency_id = display_currency_id
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user

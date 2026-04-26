@@ -28,6 +28,10 @@ class UserUpdate(BaseModel):
     password: str | None = None
 
 
+class UserPreferencesUpdate(BaseModel):
+    display_currency_id: UUID | None = None
+
+
 class LoginRequest(BaseModel):
     email: str
     password: str
@@ -43,6 +47,7 @@ class UserResponse(BaseModel):
     email: str
     role: str
     is_active: bool
+    display_currency_id: UUID | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -23,5 +23,8 @@ class User(UserBase, table=True):
     password: str  # hashed password
     role: str = Field(default="user")  # "user" | "admin"
     is_active: bool = Field(default=True)
+    display_currency_id: UUID | None = Field(
+        default=None, foreign_key="currencies.id", nullable=True
+    )
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
