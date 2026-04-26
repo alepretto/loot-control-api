@@ -30,7 +30,7 @@ def _make_investment_context(session, user_id):
     session.commit()
     session.refresh(sub)
 
-    currency = Currency(label="Real", symbol="R$")
+    currency = Currency(code="BRL", label="Real", symbol="R$")
     session.add(currency)
     session.commit()
     session.refresh(currency)

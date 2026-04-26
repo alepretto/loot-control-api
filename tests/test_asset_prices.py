@@ -101,13 +101,18 @@ class TestCreateAssetPrice:
         assert response.status_code == 422
 
     def test_create_asset_price_duplicate_symbol_date(self, client, user_headers):
-        """UniqueConstraint on (symbol, price_date) — no upsert logic.
-        The router doesn't catch IntegrityError, so it raises an unhandled exception."""
-        from sqlalchemy.exc import IntegrityError
-
+        """Upsert: same symbol+date updates price instead of error."""
         create_asset_price(client, user_headers, symbol="VALE3.SA", price_date="2026-04-24", price=65.0)
-        with pytest.raises(IntegrityError):
-            create_asset_price(client, user_headers, symbol="VALE3.SA", price_date="2026-04-24", price=66.0)
+        response = client.post(
+            "/asset-prices",
+            json={"symbol": "VALE3.SA", "price_date": "2026-04-24", "price": 66.0},
+            headers=user_headers,
+        )
+        assert response.status_code == 201
+        data = response.json()
+        assert data["symbol"] == "VALE3.SA"
+        assert data["price_date"] == "2026-04-24"
+        assert data["price"] == 66.0
 
 
 # ============================================================

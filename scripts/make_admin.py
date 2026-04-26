@@ -4,6 +4,7 @@ from sqlmodel import Session, select
 
 from app.core.database import engine
 from app.models.user import User
+from app.models.currency import Currency  # noqa: F401 — register FK for display_currency_id
 
 
 def main() -> None:

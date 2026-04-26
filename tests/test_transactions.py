@@ -25,8 +25,8 @@ def create_subcategory(client, headers, category_id, label="Restaurants"):
     return client.post("/subcategories", json=payload, headers=headers)
 
 
-def create_currency(client, headers, label="BRL", symbol="R$"):
-    payload = {"label": label, "symbol": symbol}
+def create_currency(client, headers, code="BRL", label="Real", symbol="R$"):
+    payload = {"code": code, "label": label, "symbol": symbol}
     return client.post("/currencies", json=payload, headers=headers)
 
 
@@ -48,12 +48,12 @@ def create_transaction(client, headers, subcategory_id, account_id, currency_id,
     return client.post("/transactions", json=payload, headers=headers)
 
 
-def create_full_context(client, headers):
+def create_full_context(client, headers, currency_code="BRL"):
     """Create account + category + subcategory + currency and return IDs."""
     account = create_account(client, headers).json()
     category = create_category(client, headers).json()
     subcategory = create_subcategory(client, headers, category["id"]).json()
-    currency = create_currency(client, headers).json()
+    currency = create_currency(client, headers, code=currency_code).json()
     return {
         "account_id": account["id"],
         "subcategory_id": subcategory["id"],
@@ -211,8 +211,8 @@ class TestListTransactions:
         assert response.json() == []
 
     def test_list_transactions_returns_only_own(self, client, admin_headers, user_headers):
-        admin_ctx = create_full_context(client, admin_headers)
-        user_ctx = create_full_context(client, user_headers)
+        admin_ctx = create_full_context(client, admin_headers, currency_code="USD")
+        user_ctx = create_full_context(client, user_headers, currency_code="EUR")
 
         create_transaction(client, admin_headers, **admin_ctx, description="Admin TX")
         create_transaction(client, user_headers, **user_ctx, description="User TX")
