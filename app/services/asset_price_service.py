@@ -14,6 +14,14 @@ def create_asset_price(
     price: float,
     currency: str = "BRL",
 ) -> AssetPrice:
+    existing = asset_price_repository.get_by_symbol_and_date(session, symbol, price_date)
+    if existing:
+        existing.price = price
+        existing.currency = currency
+        session.add(existing)
+        session.commit()
+        session.refresh(existing)
+        return existing
     asset_price = AssetPrice(
         symbol=symbol,
         price_date=price_date,

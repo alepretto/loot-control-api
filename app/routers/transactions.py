@@ -46,14 +46,24 @@ def create_transaction(
 def list_transactions(
     account_id: UUID | None = Query(None, description="Filter by account ID"),
     statement_id: UUID | None = Query(None, description="Filter by credit card statement ID"),
+    target_currency: str | None = Query(None, description="Convert amounts to this currency code (e.g. BRL, USD)"),
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
     if account_id:
-        return transaction_service.list_transactions_by_account(session, user_id=current_user.id, account_id=account_id)
+        return transaction_service.list_transactions_by_account(
+            session, user_id=current_user.id, account_id=account_id,
+            target_currency_code=target_currency,
+        )
     if statement_id:
-        return transaction_service.list_transactions_by_statement(session, user_id=current_user.id, statement_id=statement_id)
-    return transaction_service.list_transactions(session, user_id=current_user.id)
+        return transaction_service.list_transactions_by_statement(
+            session, user_id=current_user.id, statement_id=statement_id,
+            target_currency_code=target_currency,
+        )
+    return transaction_service.list_transactions(
+        session, user_id=current_user.id,
+        target_currency_code=target_currency,
+    )
 
 
 @router.get("/transactions/{transaction_id}", response_model=TransactionResponse)

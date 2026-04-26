@@ -70,5 +70,10 @@ class TransactionResponse(BaseModel):
     statement_id: UUID | None
     created_at: datetime
     updated_at: datetime
+    # Resolved currency info
+    currency_code: str | None = None
+    # Conversion info (populated when target_currency is requested)
+    converted_amount: float | None = None
+    target_currency_code: str | None = None
 
     model_config = {"from_attributes": True, "extra": "ignore"}

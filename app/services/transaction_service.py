@@ -1,13 +1,16 @@
 import calendar
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from sqlmodel import Session
 
+from app.models.currency import Currency
 from app.models.transaction import Transaction
 from app.repositories import transaction_repository
 from app.repositories import credit_card_repository
 from app.repositories import credit_card_statement_repository
+from app.repositories import currency_repository
+from app.repositories import exchange_rate_repository
 
 
 def _get_or_create_current_statement(
@@ -62,7 +65,6 @@ def _get_or_create_current_statement(
         # e.g. due=4, offset=5 → closing=-1 → last day of prev month
         prev_month = now.month - 1 if now.month > 1 else 12
         prev_year = now.year if now.month > 1 else now.year - 1
-        import calendar
         days_in_prev = calendar.monthrange(prev_year, prev_month)[1]
         actual_closing = days_in_prev + closing_day  # e.g. 31 + (-1) = 30
 
@@ -150,20 +152,112 @@ def create_transaction(
     return result
 
 
-def list_transactions(session: Session, user_id: UUID) -> list[Transaction]:
-    return transaction_repository.get_all_by_user(session, user_id)
+def _resolve_currency_code(session: Session, currency_id: UUID) -> str | None:
+    """Resolve a currency UUID to its ISO code (e.g. USD, BRL)."""
+    currency = currency_repository.get_by_id(session, currency_id)
+    return currency.code if currency else None
+
+
+def _convert_amount(
+    session: Session,
+    amount: float,
+    from_code: str,
+    to_code: str,
+    transaction_date: datetime,
+) -> float | None:
+    """Convert amount using exchange rate for the given date."""
+    if from_code == to_code:
+        return amount
+
+    rate_date = transaction_date.date() if isinstance(transaction_date, datetime) else transaction_date
+
+    # Try direct rate: from_code -> to_code
+    rate = exchange_rate_repository.get_rate_on_date(
+        session, from_code, to_code, rate_date
+    )
+    if rate:
+        return round(amount * rate.rate, 2)
+
+    # Try inverse rate: to_code -> from_code, then invert
+    rate = exchange_rate_repository.get_rate_on_date(
+        session, to_code, from_code, rate_date
+    )
+    if rate:
+        return round(amount / rate.rate, 2)
+
+    return None
+
+
+def _enrich_transactions(
+    session: Session,
+    transactions: list[Transaction],
+    target_currency_code: str | None = None,
+) -> list[dict]:
+    """Enrich transactions with resolved currency code and optional conversion."""
+    result = []
+    for t in transactions:
+        t_dict = {
+            "id": t.id,
+            "user_id": t.user_id,
+            "date_transaction": t.date_transaction,
+            "type": t.type,
+            "subcategory_id": t.subcategory_id,
+            "account_id": t.account_id,
+            "currency_id": t.currency_id,
+            "description": t.description,
+            "amount": t.amount,
+            "payment_methods": t.payment_methods,
+            "statement_id": t.statement_id,
+            "created_at": t.created_at,
+            "updated_at": t.updated_at,
+            "currency_code": _resolve_currency_code(session, t.currency_id),
+            "converted_amount": None,
+            "target_currency_code": None,
+        }
+
+        if target_currency_code and t_dict["currency_code"]:
+            converted = _convert_amount(
+                session,
+                t.amount,
+                t_dict["currency_code"],
+                target_currency_code,
+                t.date_transaction,
+            )
+            if converted is not None:
+                t_dict["converted_amount"] = converted
+                t_dict["target_currency_code"] = target_currency_code
+
+        result.append(t_dict)
+    return result
+
+
+def list_transactions(
+    session: Session,
+    user_id: UUID,
+    target_currency_code: str | None = None,
+) -> list[dict]:
+    transactions = transaction_repository.get_all_by_user(session, user_id)
+    return _enrich_transactions(session, transactions, target_currency_code)
 
 
 def list_transactions_by_account(
-    session: Session, user_id: UUID, account_id: UUID
-) -> list[Transaction]:
-    return transaction_repository.get_by_account(session, user_id, account_id)
+    session: Session,
+    user_id: UUID,
+    account_id: UUID,
+    target_currency_code: str | None = None,
+) -> list[dict]:
+    transactions = transaction_repository.get_by_account(session, user_id, account_id)
+    return _enrich_transactions(session, transactions, target_currency_code)
 
 
 def list_transactions_by_statement(
-    session: Session, user_id: UUID, statement_id: UUID
-) -> list[Transaction]:
-    return transaction_repository.get_by_statement(session, user_id, statement_id)
+    session: Session,
+    user_id: UUID,
+    statement_id: UUID,
+    target_currency_code: str | None = None,
+) -> list[dict]:
+    transactions = transaction_repository.get_by_statement(session, user_id, statement_id)
+    return _enrich_transactions(session, transactions, target_currency_code)
 
 
 def get_transaction_by_id(session: Session, transaction_id: UUID) -> Transaction:
