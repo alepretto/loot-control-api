@@ -9,6 +9,11 @@ def get_by_id(session: Session, currency_id: UUID) -> Currency | None:
     return session.get(Currency, currency_id)
 
 
+def get_by_code(session: Session, code: str) -> Currency | None:
+    statement = select(Currency).where(Currency.code == code)
+    return session.exec(statement).first()
+
+
 def get_all(session: Session) -> list[Currency]:
     statement = select(Currency)
     return list(session.exec(statement).all())

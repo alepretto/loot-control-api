@@ -1,10 +1,10 @@
 import pytest
 
 
-def create_currency(client, headers, label="Real Brasileiro", symbol="R$"):
+def create_currency(client, headers, code="BRL", label="Real Brasileiro", symbol="R$"):
     return client.post(
         "/currencies",
-        json={"label": label, "symbol": symbol},
+        json={"code": code, "label": label, "symbol": symbol},
         headers=headers,
     )
 
@@ -58,8 +58,8 @@ class TestListCurrencies:
     def test_list_currencies_returns_all_currencies(
         self, client, admin_headers, user_headers
     ):
-        create_currency(client, admin_headers, label="Dólar", symbol="US$")
-        create_currency(client, user_headers, label="Euro", symbol="€")
+        create_currency(client, admin_headers, code="USD", label="Dólar", symbol="US$")
+        create_currency(client, user_headers, code="EUR", label="Euro", symbol="€")
 
         response = client.get("/currencies", headers=admin_headers)
         assert response.status_code == 200

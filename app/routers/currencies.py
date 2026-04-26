@@ -23,6 +23,7 @@ def create_currency(
     try:
         currency = currency_service.create_currency(
             session,
+            code=body.code,
             label=body.label,
             symbol=body.symbol,
         )
@@ -63,6 +64,7 @@ def update_currency(
         return currency_service.update_currency(
             session,
             currency_id=currency_id,
+            code=body.code,
             label=body.label,
             symbol=body.symbol,
         )
