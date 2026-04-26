@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.database import create_db_and_tables
+from app.core.database import create_db_and_tables, engine
 from app.models.user import User  # noqa: F401 — ensure model registered
 from app.models.account import Account  # noqa: F401
 from app.models.category import Category  # noqa: F401
@@ -20,6 +20,15 @@ from app.models.exchange_rate import ExchangeRate  # noqa: F401
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
+
+    from sqlmodel import Session
+    from app.services.currency_service import seed_currencies
+
+    with Session(engine) as session:
+        count = seed_currencies(session)
+        if count:
+            print(f"✓ Seeded {count} currencies")
+
     yield
 
 
@@ -50,6 +59,7 @@ def create_app() -> FastAPI:
     from app.routers import investment_ledger
     from app.routers import asset_prices
     from app.routers import exchange_rates
+    from app.routers import admin
 
     application.include_router(users.router)
     application.include_router(accounts.router)
@@ -62,6 +72,7 @@ def create_app() -> FastAPI:
     application.include_router(investment_ledger.router)
     application.include_router(asset_prices.router)
     application.include_router(exchange_rates.router)
+    application.include_router(admin.router)
 
     return application
 

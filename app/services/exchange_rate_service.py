@@ -14,6 +14,13 @@ def create_exchange_rate(
     rate_date: date,
     rate: float,
 ) -> ExchangeRate:
+    existing = exchange_rate_repository.get_rate_on_date(session, from_currency, to_currency, rate_date)
+    if existing:
+        existing.rate = rate
+        session.add(existing)
+        session.commit()
+        session.refresh(existing)
+        return existing
     exchange_rate = ExchangeRate(
         from_currency=from_currency,
         to_currency=to_currency,
